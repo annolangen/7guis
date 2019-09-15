@@ -1,5 +1,6 @@
 import { html, render, svg } from '../node_modules/lit-html/lit-html';
 import { newSpreadsheet } from './spreadsheet';
+import { styleMap } from '../node_modules/lit-html/directives/style-map.js';
 
 function newCounter() {
   let count = 0;
@@ -96,13 +97,13 @@ function newBooker() {
 function newTimer() {
   let elapsed = 0;
   let duration = 25;
-  let timer = setInterval(tick, 100);
+  let timer: number | null = setInterval(tick, 100);
   function tick() {
     if (elapsed < duration) {
       elapsed = Math.round(10 * elapsed + 1) / 10;
     } else {
       elapsed = duration;
-      clearInterval(timer);
+      clearInterval(timer!);
       timer = null;
     }
     renderBody();
@@ -160,7 +161,7 @@ function newTimer() {
 }
 function newCrud() {
   let prefix = '';
-  let selected = undefined;
+  let selected: number | undefined = undefined;
   const nameList = ['Emil, Hans', 'Mustermann, Max', 'Tisch, Roman'];
   const first = document.createElement('input');
   const last = document.createElement('input');
@@ -258,16 +259,15 @@ function newCircles() {
     state = redo.pop();
     renderBody();
   }
-
   function advanceState(nextState: State) {
     undo.push(state);
     state = nextState;
     renderBody();
   }
 
-  let selected: number = undefined;
-  function selectCircle(e: MouseEvent) {
-    selected = Number(e.target.dataset.index);
+  let selected: number | undefined = undefined;
+  function selectCircle(this: SVGCircleElement, e: MouseEvent) {
+    selected = Number(this.dataset.index);
     undo.push(state);
     // New state with fresh copy of selected circle
     state = { circles: [...state.circles] };
@@ -275,16 +275,16 @@ function newCircles() {
     e.stopPropagation();
     renderBody();
   }
-  function adjustRadius(e: InputEvent) {
-    state.circles[selected].r = Number(e.target.value);
+  function adjustRadius(this: HTMLInputElement, e: InputEvent) {
+    state.circles[selected!].r = Number(this.value);
     renderBody();
   }
-  function newCircle(e: MouseEvent) {
+  function newCircle(this: SVGElement, e: MouseEvent) {
     if (selected !== undefined) {
       undo.push(state);
       selected = undefined;
     }
-    const svg = e.target.getBoundingClientRect();
+    const svg = this.getBoundingClientRect();
     advanceState({
       circles: [
         ...state.circles,
@@ -310,13 +310,14 @@ function newCircles() {
     <svg @click=${newCircle} style="border: 2px solid;">
       ${state.circles.map(
         ({ x, y, r }, index) =>
-          svg`<circle cx=${x} cy=${y} r=${r} 
-    style="fill:${
-      index === selected ? 'grey' : 'transparent'
-    };stroke-width: 1;stroke: black;transition: fill 0.2s ease 0s;"
-    data-index=${index}
-    @click=${selectCircle}>
-  </circle>`
+          svg`
+          <circle cx=${x} cy=${y} r=${r} 
+            style="fill:${
+              index === selected ? 'grey' : 'transparent'
+            };stroke-width: 1;stroke: black;transition: fill 0.2s ease 0s;"
+             data-index=${index}
+             @click=${selectCircle}>
+          </circle>`
       )}
     </svg>
     ${(({ x, y, r, display }) => html`
@@ -333,10 +334,20 @@ function newCircles() {
 }
 
 function newCells() {
-  let selected: { i: number; j: number } = undefined;
+  let selected: { i: number; j: number } | undefined = undefined;
   const sheet = newSpreadsheet();
+  const editableCell = document.createElement('td');
+  editableCell.contentEditable = 'true';
+  editableCell.addEventListener('keydown', keydown);
+  function keydown(this: HTMLTableDataCellElement, ev: KeyboardEvent) {
+    if (selected && ev.key === 'Enter') {
+      const { i, j } = selected;
+      sheet.setCell(i, j, this.innerText);
+      selected = undefined;
+      renderBody();
+    }
+  }
   return () => html`
-    <div>Cells</div>
     <div style="height: 30em;overflow:auto">
       <table class="pure-table pure-table-bordered">
         <tr style="background: rgb(246, 246, 246); user-select: none;">
@@ -360,31 +371,20 @@ function newCells() {
                 <b>${i}</b>
               </td>
               ${Array.from({ length: 26 }, (_, j) => {
-                const editable =
-                  selected && selected.i === i && selected.j === j;
-                return html`
-                  <td
-                    @click=${(e: MouseEvent) => {
-                      selected = { i, j };
-                      renderBody();
-                      (e.target as HTMLElement).focus();
-                    }}
-                    @keydown=${(e: KeyboardEvent) => {
-                      if (e.which === 13) {
-                        sheet.setCell(
-                          i,
-                          j,
-                          (e.target as HTMLElement).innerText
-                        );
-                        selected = undefined;
-                        renderBody();
-                      }
-                    }}
-                    ?contenteditable=${editable}
-                  >
-                    ${editable ? sheet.cell(i, j) : sheet.value(i, j)}
-                  </td>
-                `;
+                return selected && selected.i === i && selected.j === j
+                  ? editableCell
+                  : html`
+                      <td
+                        @click=${(e: MouseEvent) => {
+                          selected = { i, j };
+                          editableCell.innerText = sheet.cell(i, j);
+                          renderBody();
+                          editableCell.focus();
+                        }}
+                      >
+                        ${sheet.value(i, j)}
+                      </td>
+                    `;
               })}
             </tr>
           `
@@ -429,14 +429,14 @@ const renderBody = () =>
         </ul>
       </div>
       <p></p>
-      <div style="margin-left:auto; margin-right:auto; max-width:75em">
+      <div style="margin-left:auto; margin-right:auto; max-width:48em; color:#777">
         ${Object.entries(examples).map(
           ([k, { render }]) =>
             html`
               <div
-                style="display:${'#' + k === window.location.hash
-                  ? ''
-                  : 'none'}"
+                style="${styleMap(
+                  '#' + k === window.location.hash ? {} : { display: 'none' }
+                )}"
               >
                 ${render()}
               </div>
@@ -447,6 +447,8 @@ const renderBody = () =>
     document.body
   );
 
-window.location.hash = 'counter';
+if (!window.location.hash) {
+  window.location.hash = 'counter';
+}
 renderBody();
 window.addEventListener('hashchange', renderBody);

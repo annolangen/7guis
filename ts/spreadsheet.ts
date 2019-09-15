@@ -15,18 +15,12 @@ const CELL_COUNT = ROW_COUNT * COL_COUNT;
 const REF_PATTERN = /^([a-z])([0-9][0-9]?)/i;
 const OP_PATTERN = /^(sum|prod|add|sub|div|mul)[(]/;
 
-// Evaluation obtains values for arguments for (row/col) positions. If
-// there is a cycle, we detect it by incrementing depth every time we
-// dereference through the environment.
-type Env = (row: number, col: number, depth: number) => number;
-
 type ValueProviderList = Array<(depth: number) => number>;
 
 export function newSpreadsheet(): Spreadsheet {
   const cells = Array.from({ length: ROW_COUNT }, (_, i) =>
     Array.from({ length: COL_COUNT }, (_, j) => emptyFormula)
   );
-  const env: Env = (row, col, depth) => cells[row][col].eval(depth + 1);
   const toStringWithFallback = (n: number, fallback: string) =>
     isNaN(n) ? fallback : String(n);
   const formulaValue = (f: Formula) =>
@@ -72,7 +66,7 @@ export function newSpreadsheet(): Spreadsheet {
     const refMatch = expr.lookingAt(REF_PATTERN);
     if (refMatch) {
       const [row, col] = parseRef(refMatch, expr);
-      return newFormula(refMatch[0], depth => env(row, col, depth));
+      return newFormula(refMatch[0], depth => cells[row][col].eval(depth + 1));
     }
     const opMatch = expr.lookingAt(OP_PATTERN);
     if (opMatch) {
@@ -112,8 +106,8 @@ export function newSpreadsheet(): Spreadsheet {
     rect.match(':');
     const [lrRow, lrCol] = parseRef(rect.lookingAt(REF_PATTERN), rect);
     rect.match(')');
-    const h = lrRow - ulRow;
-    const w = lrCol - ulCol;
+    const h = lrRow - ulRow + 1;
+    const w = lrCol - ulCol + 1;
     return Array.from({ length: h }, (_, i) => ulRow + i).reduce(
       (acc: ValueProviderList, i) =>
         acc.concat(
@@ -137,6 +131,9 @@ export function newSpreadsheet(): Spreadsheet {
 
 interface Formula {
   displayString: string;
+  // Evaluation obtains values for arguments for (row/col)
+  // positions. If there is a cycle, we detect it by incrementing
+  // depth every time we dereference through the environment.
   eval(depth: number): number;
 }
 const newFormula = (
