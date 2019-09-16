@@ -1,6 +1,7 @@
 import { html, render, svg } from '../node_modules/lit-html/lit-html';
 import { newSpreadsheet } from './spreadsheet';
 import { styleMap } from '../node_modules/lit-html/directives/style-map.js';
+import { classBody } from '@babel/types';
 
 function newCounter() {
   let count = 0;
@@ -339,12 +340,26 @@ function newCells() {
   const editableCell = document.createElement('td');
   editableCell.contentEditable = 'true';
   editableCell.addEventListener('keydown', keydown);
+  const hookByKey: { [key: string]: (i: number, j: number) => void } = {
+    Enter: (i, j) => (selected = undefined),
+    ArrowRight: (i, j) => j < 26 && (selected!.j += 1),
+    ArrowLeft: (i, j) => j > 0 && (selected!.j -= 1),
+    ArrowUp: (i, j) => i > 0 && (selected!.i -= 1),
+    ArrowDown: (i, j) => i < 99 && (selected!.i += 1),
+  };
   function keydown(this: HTMLTableDataCellElement, ev: KeyboardEvent) {
-    if (selected && ev.key === 'Enter') {
-      const { i, j } = selected;
-      sheet.setCell(i, j, this.innerText);
-      selected = undefined;
-      renderBody();
+    if (selected) {
+      const hook = hookByKey[ev.key];
+      if (hook) {
+        const { i, j } = selected!;
+        sheet.setCell(i, j, this.innerText);
+        hook(i, j);
+        renderBody();
+        if (selected) {
+          editableCell.innerText = sheet.cell(selected.i, selected.j);
+          editableCell.focus();
+        }
+      }
     }
   }
   return () => html`
@@ -429,7 +444,9 @@ const renderBody = () =>
         </ul>
       </div>
       <p></p>
-      <div style="margin-left:auto; margin-right:auto; max-width:48em; color:#777">
+      <div
+        style="margin-left:auto; margin-right:auto; max-width:48em; color:#777"
+      >
         ${Object.entries(examples).map(
           ([k, { render }]) =>
             html`

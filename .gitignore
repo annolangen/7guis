@@ -2,3 +2,5 @@ node_modules
 *.bak
 .cache
 dist
+.idea
+package-lock.json

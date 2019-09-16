@@ -12,148 +12,150 @@ export interface Spreadsheet {
 const ROW_COUNT = 100;
 const COL_COUNT = 'Z'.charCodeAt(0) - 'A'.charCodeAt(0) + 1;
 const CELL_COUNT = ROW_COUNT * COL_COUNT;
-const REF_PATTERN = /^([a-z])([0-9][0-9]?)/i;
+const REF_PATTERN = /^([a-z])([0-9][0-9]?)/i; // Cell references A0 to Z99
 const OP_PATTERN = /^(sum|prod|add|sub|div|mul)[(]/;
+const ALWAYS_NAN = (depth: number) => NaN;
+const EMPTY_FORMULA: Formula = newFormula('', ALWAYS_NAN);
 
-type ValueProviderList = Array<(depth: number) => number>;
+// Evaluation obtains values for arguments for (row/col)
+// positions. If there is a cycle, we detect it by incrementing
+// depth every time we dereference.
+interface Calculator {
+  (depth: number): number;
+}
+
+interface Formula extends Calculator {
+  displayString: string;
+  value(): string; // Calculated value or displayString, if NaN
+}
+
+type Env = (row: number, col: number) => Calculator;
+
+// Encapsulates position in text to be parsed.
+interface ParseState {
+  // Throws syntax error unless the expected string is at the current position
+  match: (expected: string) => void;
+  // Returns result of RegExp.exec and advances current position by match, if successful.
+  tryMatch: (r: RegExp) => RegExpExecArray | null;
+}
 
 export function newSpreadsheet(): Spreadsheet {
-  const cells = Array.from({ length: ROW_COUNT }, (_, i) =>
-    Array.from({ length: COL_COUNT }, (_, j) => emptyFormula)
+  const cells: Formula[][] = Array.from({ length: ROW_COUNT }, (_, i) =>
+    Array.from({ length: COL_COUNT }, (_, j) => EMPTY_FORMULA)
   );
-  const toStringWithFallback = (n: number, fallback: string) =>
-    isNaN(n) ? fallback : String(n);
-  const formulaValue = (f: Formula) =>
-    toStringWithFallback(f.eval(0), f.displayString);
-  const parseCell = (cell: string) =>
-    cell.startsWith('=')
-      ? parseExpr(newParseState(cell.substr(1)))
-      : parseConstant(cell);
-  const rectValues = (args: ValueProviderList) => (depth: number) =>
-    args.map(f => f(depth)).filter(n => !isNaN(n));
-  const binOp = (op: (x: number, y: number) => number) => (
-    displayString: string,
-    args: ParseState
-  ) => {
-    const [first, second] = parseTwoArgs(args);
-    return newFormula(displayString, depth =>
-      op(first.eval(depth), second.eval(depth))
-    );
-  };
-  const argParserByOp: {
-    [key: string]: (displayString: string, args: ParseState) => Formula;
-  } = {
-    sum,
-    prod,
-    add: binOp((x, y) => x + y),
-    sub: binOp((x, y) => x - y),
-    div: binOp((x, y) => x / y),
-    mul: binOp((x, y) => x * y),
-  };
-  function sum(displayString: string, rect: ParseState) {
-    const argValues = rectValues(parseRect(rect));
-    return newFormula(displayString, depth =>
-      argValues(depth).reduce((a, n) => a + n, 0)
-    );
-  }
-  function prod(displayString: string, rect: ParseState) {
-    const argValues = rectValues(parseRect(rect));
-    return newFormula(displayString, depth =>
-      argValues(depth).reduce((a, n) => a * n, 1)
-    );
-  }
-  function parseExpr(expr: ParseState): Formula {
-    const refMatch = expr.lookingAt(REF_PATTERN);
-    if (refMatch) {
-      const [row, col] = parseRef(refMatch, expr);
-      return newFormula(refMatch[0], depth => cells[row][col].eval(depth + 1));
-    }
-    const opMatch = expr.lookingAt(OP_PATTERN);
-    if (opMatch) {
-      expr.match(opMatch[0]);
-      const argParser = argParserByOp[opMatch[1]];
-      // TODO fix displayString for nested expressions.
-      return argParser(expr.text, expr);
-    }
-    const constMatch = expr.lookingAt(/^[^ ,()]+/);
-    if (constMatch) {
-      expr.match(constMatch[0]);
-      return parseConstant(constMatch[0]);
-    }
-    return emptyFormula;
-  }
-  function parseRef(
-    refMatch: RegExpExecArray | null,
-    ref: ParseState
-  ): number[] {
-    if (!refMatch) throw new Error('syntax error: expected reference');
-    ref.match(refMatch[0]);
-    return [
-      Number(refMatch[2]),
-      refMatch[1].toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0),
-    ];
-  }
-  function parseTwoArgs(args: ParseState): Formula[] {
-    const first = parseExpr(args);
-    const commaMatch = args.lookingAt(/ *, */);
-    args.match(commaMatch ? commaMatch[0] : ',');
-    const second = parseExpr(args);
-    args.match(')');
-    return [first, second];
-  }
-  function parseRect(rect: ParseState): ValueProviderList {
-    const [ulRow, ulCol] = parseRef(rect.lookingAt(REF_PATTERN), rect);
-    rect.match(':');
-    const [lrRow, lrCol] = parseRef(rect.lookingAt(REF_PATTERN), rect);
-    rect.match(')');
-    const h = lrRow - ulRow + 1;
-    const w = lrCol - ulCol + 1;
-    return Array.from({ length: h }, (_, i) => ulRow + i).reduce(
-      (acc: ValueProviderList, i) =>
-        acc.concat(
-          Array.from({ length: w }, (_, j) => (depth: number) =>
-            cells[i][j].eval(depth)
-          )
-        ),
-      []
-    );
-  }
-  function parseConstant(text: string): Formula {
-    const n = Number(text);
-    return newFormula(text, _ => n);
+  function deref(row: number, col: number): Calculator {
+    const cell = cells[row][col];
+    return depth => (depth > CELL_COUNT ? NaN : cell(depth + 1));
   }
   return {
-    value: (row, col) => formulaValue(cells[row][col]),
+    value: (row, col) => cells[row][col].value(),
     cell: (row, col) => cells[row][col].displayString,
-    setCell: (row, col, cell) => (cells[row][col] = parseCell(cell)),
+    setCell: (row, col, cell) =>
+      (cells[row][col] = cell.startsWith('=')
+        ? newFormula(cell, parseExpr(newParseState(cell.substr(1)), deref))
+        : parseConstant(cell)),
   };
 }
 
-interface Formula {
-  displayString: string;
-  // Evaluation obtains values for arguments for (row/col)
-  // positions. If there is a cycle, we detect it by incrementing
-  // depth every time we dereference through the environment.
-  eval(depth: number): number;
+function newFormula(displayString: string, calc: Calculator): Formula {
+  const result = calc as Formula;
+  result.displayString = displayString;
+  result.value = () => toStringWithFallback(calc(0), displayString);
+  return result;
 }
-const newFormula = (
-  displayString: string,
-  calc: (depth: number) => number
-): Formula => ({
-  displayString,
-  eval: depth => (depth > CELL_COUNT ? NaN : calc(depth)),
-});
-const emptyFormula: Formula = {
-  displayString: '',
-  eval: depth => NaN,
+
+const toStringWithFallback = (n: number, fallback: string) =>
+  isNaN(n) ? fallback : String(n);
+
+function parseExpr(expr: ParseState, env: Env): Calculator {
+  const refMatch = expr.tryMatch(REF_PATTERN);
+  if (refMatch) {
+    const [row, col] = parseRef(refMatch);
+    return env(row, col);
+  }
+  const opMatch = expr.tryMatch(OP_PATTERN);
+  if (opMatch) {
+    return ARG_PARSER_BY_OP[opMatch[1]](expr, env);
+  }
+  const constMatch = expr.tryMatch(/^[^ ,()]+/);
+  if (!constMatch) {
+    return ALWAYS_NAN;
+  }
+  const n = Number(constMatch[0]);
+  return _ => n;
+}
+
+function parseRef(refMatch: RegExpExecArray | null): number[] {
+  if (!refMatch) throw new Error('syntax error: expected reference');
+  return [
+    Number(refMatch[2]),
+    refMatch[1].toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0),
+  ];
+}
+
+// Returns Formula with the given text as display string. The
+// Formula's calculated value is the given text as a number if
+// possible, NaN otherwise.
+function parseConstant(text: string): Formula {
+  const n = Number(text);
+  return newFormula(text, _ => n);
+}
+
+const binOp = (op: (x: number, y: number) => number) => (
+  args: ParseState,
+  env: Env
+): Calculator => {
+  const [first, second] = parseTwoArgs(args, env);
+  return depth => op(first(depth), second(depth));
 };
 
-interface ParseState {
-  text: string;
-  pos: () => number;
-  match: (expected: string) => void;
-  lookingAt: (r: RegExp) => RegExpExecArray | null;
+const ARG_PARSER_BY_OP: {
+  [key: string]: (args: ParseState, env: Env) => Calculator;
+} = {
+  sum,
+  prod,
+  add: binOp((x, y) => x + y),
+  sub: binOp((x, y) => x - y),
+  div: binOp((x, y) => x / y),
+  mul: binOp((x, y) => x * y),
+};
+
+function sum(rect: ParseState, env: Env): Calculator {
+  const argValues = rectValues(parseRect(rect, env));
+  return depth => argValues(depth).reduce((a, n) => a + n, 0);
 }
+
+function prod(rect: ParseState, env: Env): Calculator {
+  const argValues = rectValues(parseRect(rect, env));
+  return depth => argValues(depth).reduce((a, n) => a * n, 1);
+}
+
+// Function returning a list of (non-NaN) numbers from the given calculators.
+const rectValues = (rectCalculators: Calculator[]) => (depth: number) =>
+  rectCalculators.map(f => f(depth)).filter(n => !isNaN(n));
+
+function parseTwoArgs(args: ParseState, env: Env): Calculator[] {
+  const first = parseExpr(args, env);
+  if (!args.tryMatch(/^ *, */)) args.match(',');
+  const second = parseExpr(args, env);
+  if (!args.tryMatch(/^ *[)] */)) args.match(')');
+  return [first, second];
+}
+
+function parseRect(rect: ParseState, env: Env): Calculator[] {
+  const [ulRow, ulCol] = parseRef(rect.tryMatch(REF_PATTERN));
+  rect.match(':');
+  const [lrRow, lrCol] = parseRef(rect.tryMatch(REF_PATTERN));
+  if (!rect.tryMatch(/^ *[)] */)) rect.match(')');
+  const h = lrRow - ulRow + 1;
+  const w = lrCol - ulCol + 1;
+  return Array.from({ length: h }, (_, i) => ulRow + i).reduce(
+    (acc: Calculator[], i) =>
+      acc.concat(Array.from({ length: w }, (_, j) => env(i, j))),
+    []
+  );
+}
+
 function newParseState(text: string): ParseState {
   let pos = 0;
   function match(expected: string) {
@@ -163,10 +165,12 @@ function newParseState(text: string): ParseState {
       throw new Error(`Parse error wanted ${expected} at ${text.substr(pos)}`);
     }
   }
-  return {
-    text,
-    match,
-    pos: () => pos,
-    lookingAt: r => r.exec(text.substr(pos)),
-  };
+  function tryMatch(r: RegExp) {
+    const match = r.exec(text.substr(pos));
+    if (match) {
+      pos += match[0].length;
+    }
+    return match;
+  }
+  return { match, tryMatch };
 }
