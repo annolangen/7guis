@@ -1,7 +1,6 @@
 import { html, render, svg } from '../node_modules/lit-html/lit-html';
 import { newSpreadsheet } from './spreadsheet';
 import { styleMap } from '../node_modules/lit-html/directives/style-map.js';
-import { classBody } from '@babel/types';
 
 function newCounter() {
   let count = 0;
@@ -16,6 +15,7 @@ function newCounter() {
     </form>
   `;
 }
+
 function newConverter() {
   let temp = 32; // in Fahrenheit
   function fahrenheitInput(e: InputEvent) {
@@ -39,6 +39,7 @@ function newConverter() {
     </form>
   `;
 }
+
 function newBooker() {
   let flightType = 'one-way flight';
   let out = new Date().toISOString().substr(0, 10); // match yyyy-MM-dd format used by date input
@@ -63,7 +64,7 @@ function newBooker() {
   return () => html`
     <form class="pure-form">
       <fieldset class="pure-group">
-        <select class="pure-input-1-4" id="flight_type" @change=${typeChange}>
+        <select class="pure-input-1-4" @change=${typeChange}>
           <option>one-way flight</option>
           <option>return flight</option>
         </select>
@@ -95,6 +96,7 @@ function newBooker() {
     </div>
   `;
 }
+
 function newTimer() {
   let elapsed = 0;
   let duration = 25;
@@ -160,6 +162,7 @@ function newTimer() {
     <div class="pure-button pure-button-primary" @click=${reset}>Reset</div>
   `;
 }
+
 function newCrud() {
   let prefix = '';
   let selected: number | undefined = undefined;
@@ -238,14 +241,17 @@ function newCrud() {
     </form>
   `;
 }
+
 interface Circle {
   x: number;
   y: number;
   r: number;
 }
+
 interface State {
   circles: Circle[];
 }
+
 function newCircles() {
   let state: State = { circles: [] };
   const undo: State[] = [];
