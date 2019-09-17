@@ -77,7 +77,7 @@ function newBooker() {
         <input
           class="pure-input-1-4"
           type="date"
-          .value=${out}
+          .value=${back}
           @change=${returnChange}
           ?disabled=${flightType === 'one-way flight'}
         />
