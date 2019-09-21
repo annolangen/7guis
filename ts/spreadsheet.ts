@@ -43,10 +43,8 @@ export function newSpreadsheet(): Spreadsheet {
   const cells: Formula[][] = Array.from({ length: ROW_COUNT }, (_, i) =>
     Array.from({ length: COL_COUNT }, (_, j) => EMPTY_FORMULA)
   );
-  function deref(row: number, col: number): Calculator {
-    const cell = cells[row][col];
-    return depth => (depth > CELL_COUNT ? NaN : cell(depth + 1));
-  }
+  const deref = (row: number, col: number) => depth =>
+    depth > CELL_COUNT ? NaN : cells[row][col](depth + 1);
   return {
     value: (row, col) => cells[row][col].value(),
     cell: (row, col) => cells[row][col].displayString,
