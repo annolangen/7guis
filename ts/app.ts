@@ -4,28 +4,21 @@ import { styleMap } from '../node_modules/lit-html/directives/style-map.js';
 
 function newCounter() {
   let count = 0;
-  function click() {
-    count += 1;
-    renderBody();
-  }
   return () => html`
     <form class="pure-form">
       <label>${count}</label>
-      <div class="pure-button pure-button-primary" @click=${click}>Count</div>
+      <div class="pure-button pure-button-primary" @click=${() => (count += 1)}>
+        Count
+      </div>
     </form>
   `;
 }
 
 function newConverter() {
   let temp = 32; // in Fahrenheit
-  function fahrenheitInput(e: InputEvent) {
-    temp = Number(e.target.value);
-    renderBody();
-  }
-  function celsiusInput(e: InputEvent) {
-    temp = Math.round(Number(e.target.value) * 1.8 + 32);
-    renderBody();
-  }
+  const fahrenheitInput = (e: InputEvent) => (temp = Number(e.target.value));
+  const celsiusInput = (e: InputEvent) =>
+    (temp = Math.round(Number(e.target.value) * 1.8 + 32));
   return () => html`
     <form class="pure-form">
       <input
@@ -45,22 +38,12 @@ function newBooker() {
   let out = new Date().toISOString().substr(0, 10); // match yyyy-MM-dd format used by date input
   let back = out;
   let booked = false;
-  function typeChange(e: InputEvent) {
-    flightType = e.target.value;
-    renderBody();
-  }
-  function outboundChange(e: InputEvent) {
-    out = e.target.value;
-    renderBody();
-  }
-  function returnChange(e: InputEvent) {
-    back = e.target.value;
-    renderBody();
-  }
-  function bookClick() {
-    booked = true;
-    renderBody();
-  }
+  const typeChange = (e: InputEvent) => (flightType = e.target.value);
+  const outboundChange = (e: InputEvent) => (out = e.target.value);
+  const returnChange = (e: InputEvent) => (back = e.target.value);
+
+  const bookClick = () => (booked = true);
+
   return () => html`
     <form class="pure-form">
       <fieldset class="pure-group">
@@ -111,16 +94,13 @@ function newTimer() {
     }
     renderBody();
   }
-  function durationChange(e: InputEvent) {
-    duration = Number(e.target.value);
-    renderBody();
-  }
+  const durationChange = (e: InputEvent) => (duration = Number(e.target.value));
+
   function reset() {
     elapsed = 0;
     if (!timer) {
       timer = setInterval(tick, 100);
     }
-    renderBody();
   }
   return () => html`
     <style>
@@ -171,34 +151,27 @@ function newCrud() {
   const last = document.createElement('input');
   first.type = 'text';
   last.type = 'text';
-  function prefixChange(e: InputEvent) {
-    prefix = e.target.value;
-    renderBody();
-  }
+  const prefixChange = (e: InputEvent) => (prefix = e.target.value);
   function selectionChange(e: InputEvent) {
     selected = Number(e.target.value);
     const match = nameList[selected].match('([^,]*), (.*)');
     last.value = match[1];
     first.value = match[2];
-    renderBody();
   }
-  function resetSelectionAndRender() {
+  function resetSelection() {
     selected = undefined;
     last.value = '';
     first.value = '';
-    renderBody();
   }
   function create() {
     nameList.push(last.value + ', ' + first.value);
-    resetSelectionAndRender();
+    resetSelection();
   }
-  function update() {
-    nameList[selected] = last.value + ', ' + first.value;
-    renderBody();
-  }
+  const update = () => (nameList[selected] = last.value + ', ' + first.value);
+
   function Delete() {
     delete nameList[selected];
-    resetSelectionAndRender();
+    resetSelection();
   }
   return () => html`
     <form class="pure-form pure-form-aligned">
@@ -259,12 +232,10 @@ function newCircles() {
   function Undo() {
     redo.push(state);
     state = undo.pop();
-    renderBody();
   }
   function Redo() {
     undo.push(state);
     state = redo.pop();
-    renderBody();
   }
   function advanceState(nextState: State) {
     undo.push(state);
@@ -282,10 +253,8 @@ function newCircles() {
     e.stopPropagation();
     renderBody();
   }
-  function adjustRadius(this: HTMLInputElement, e: InputEvent) {
-    state.circles[selected!].r = Number(this.value);
-    renderBody();
-  }
+  const adjustRadius = (this: HTMLInputElement, e: InputEvent) =>
+    (state.circles[selected!].r = Number(this.value));
   function newCircle(this: SVGElement, e: MouseEvent) {
     if (selected !== undefined) {
       undo.push(state);
@@ -474,4 +443,7 @@ if (!window.location.hash) {
   window.location.hash = 'counter';
 }
 renderBody();
+window.addEventListener('change', renderBody);
+window.addEventListener('click', renderBody);
 window.addEventListener('hashchange', renderBody);
+window.addEventListener('input', renderBody);
