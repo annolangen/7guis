@@ -1,0 +1,27 @@
+Separate UI into plain old type script model plus passive view. The
+passive view should allow for different implementations, say for
+different web frameworks, or even web vs. node command line.
+
+The model part, may have multiple layers. Specifically, within it
+there might be a layer that is devoid of user interaction. Those
+layers of the model might be even more widely usable, say backend and
+frontend.
+
+There is a top level render function for the model. There is a default
+rendering for a plain old typescript object. The presentation is
+improved with rendring advice, which spans a range of possibilities,
+from display title, hidden, disabled, description, and input
+constraints.
+
+*** Default rendering
+- form with certain own properties labeled by property name with inputs for values 
+  - readonly if setter is undefined
+  - type based on value or getter retrieved value
+    string or number: text
+    boolean: checkbox
+    0 argument function: button
+object properties: collapsible header with property name
+
+   
+     
+  - 
