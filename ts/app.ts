@@ -111,13 +111,10 @@ function newTimer() {
     <table>
       <tr>
         <td style="text-align:right">Elapsed time</td>
-        <td style="border: 1px;border-style: solid;width:20em">
-          <div
-            style="height: 16px;background:teal;width:${Math.min(
-              100,
-              (100 * elapsed) / duration
-            )}%"
-          ></div>
+        <td style="width:20em">
+          <progress value=${elapsed} max=${duration} style="width:100%">
+            Progress: ${Math.min(100, (100 * elapsed) / duration)}%
+          </progress>
         </td>
       </tr>
       <tr>
