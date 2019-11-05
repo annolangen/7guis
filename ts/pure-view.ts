@@ -1,49 +1,49 @@
 import { html, render, svg } from '../node_modules/lit-html/lit-html';
-import { newSpreadsheet } from './spreadsheet';
+import { newSpreadsheet, Spreadsheet } from './spreadsheet';
 import { styleMap } from '../node_modules/lit-html/directives/style-map.js';
+import {
+  PAGE_MODEL,
+  Counter,
+  Converter,
+  Booker,
+  Timer,
+  Crud,
+  Circles,
+} from './model';
 
-function newCounter() {
-  let count = 0;
+const newCounter = (counter: Counter) => () => html`
+  <form class="pure-form">
+    <label>${counter.count}</label>
+    <div class="pure-button pure-button-primary" @click=${counter.incr}>
+      Count
+    </div>
+  </form>
+`;
+
+function newConverter(converter: Converter) {
+  const setCelsius = (e: InputEvent) =>
+    (converter.celsius = Number(e.target.value));
+  const setFahrenheit = (e: InputEvent) =>
+    (converter.fahrenheit = Number(e.target.value));
   return () => html`
     <form class="pure-form">
-      <label>${count}</label>
-      <div class="pure-button pure-button-primary" @click=${() => (count += 1)}>
-        Count
-      </div>
-    </form>
-  `;
-}
-
-function newConverter() {
-  let temp = 32; // in Fahrenheit
-  const fahrenheitInput = (e: InputEvent) => (temp = Number(e.target.value));
-  const celsiusInput = (e: InputEvent) =>
-    (temp = Math.round(Number(e.target.value) * 1.8 + 32));
-  return () => html`
-    <form class="pure-form">
-      <input
-        id="celsius"
-        .value="${Math.round((temp - 32) / 1.8)}"
-        @input=${celsiusInput}
-      />
+      <input id="celsius" .value="${converter.celsius}" @input=${setCelsius} />
       <label for="celsius">Celsius =</label>
-      <input id="fahrenheit" .value="${temp}" @input=${fahrenheitInput} />
+      <input
+        id="fahrenheit"
+        .value="${converter.fahrenheit}"
+        @input=${setFahrenheit}
+      />
       <label for="fahrenheit">Fahrenheit</label>
     </form>
   `;
 }
 
-function newBooker() {
-  let flightType = 'one-way flight';
-  let out = new Date().toISOString().substr(0, 10); // match yyyy-MM-dd format used by date input
-  let back = out;
-  let booked = false;
-  const typeChange = (e: InputEvent) => (flightType = e.target.value);
-  const outboundChange = (e: InputEvent) => (out = e.target.value);
-  const returnChange = (e: InputEvent) => (back = e.target.value);
-
-  const bookClick = () => (booked = true);
-
+function newBooker(booker: Booker) {
+  const typeChange = (e: InputEvent) => (booker.type = e.target.value);
+  const outboundChange = (e: InputEvent) => (booker.outbound = e.target.value);
+  const returnChange = (e: InputEvent) => (booker.back = e.target.value);
+  const bookClick = () => (booker.booked = true);
   return () => html`
     <form class="pure-form">
       <fieldset class="pure-group">
@@ -54,141 +54,139 @@ function newBooker() {
         <input
           class="pure-input-1-4"
           type="date"
-          .value=${out}
+          .value=${booker.outbound}
           @change=${outboundChange}
         />
         <input
           class="pure-input-1-4"
           type="date"
-          .value=${back}
+          .value=${booker.back}
           @change=${returnChange}
-          ?disabled=${flightType === 'one-way flight'}
+          ?disabled=${booker.type === 'one-way flight'}
         />
         <div
           class="pure-button pure-button-primary pure-input-1-4"
-          ?disabled=${flightType !== 'one-way flight' && back <= out}
+          ?disabled=${booker.type !== 'one-way flight' &&
+    booker.back <= booker.outbound}
           @click=${bookClick}
         >
           Book
         </div>
       </fieldset>
     </form>
-    <div style="display:${booked ? 'block' : 'none'}">
-      You have booked a ${flightType} on
-      ${out}${flightType !== 'one-way flight' ? ' returning on ' + back : ''}.
+    <div style="display:${booker.booked ? 'block' : 'none'}">
+      You have booked a ${booker.type} on
+      ${booker.outbound}${booker.type !== 'one-way flight'
+      ? ' returning on ' + booker.back
+      : ''}.
     </div>
   `;
 }
 
-function newTimer() {
-  let elapsed = 0;
-  let duration = 25;
-  let timer: number | null = setInterval(tick, 100);
-  function tick() {
-    if (elapsed < duration) {
-      elapsed = Math.round(10 * elapsed + 1) / 10;
-    } else {
-      elapsed = duration;
-      clearInterval(timer!);
-      timer = null;
-    }
-    renderBody();
-  }
-  const durationChange = (e: InputEvent) => (duration = Number(e.target.value));
-
-  function reset() {
-    elapsed = 0;
-    if (!timer) {
-      timer = setInterval(tick, 100);
-    }
-  }
-  return () => html`
-    <style>
-      td {
-        padding: 0.5em 1em;
+function newTimer(model: Timer) {
+  let timer: number | null = null;
+  const durationChange = (e: InputEvent) =>
+    (model.duration = Number(e.target.value));
+  return () => {
+    if (timer) {
+      if (model.elapsed >= model.duration) {
+        clearInterval(timer);
+        timer = null;
       }
-    </style>
-    <table>
-      <tr>
-        <td style="text-align:right">Elapsed time</td>
-        <td style="width:20em">
-          <progress value=${elapsed} max=${duration} style="width:100%">
-            Progress: ${Math.min(100, (100 * elapsed) / duration)}%
-          </progress>
-        </td>
-      </tr>
-      <tr>
-        <td style="text-align:right">Elapsed seconds</td>
-        <td>${elapsed}</td>
-      </tr>
-      <tr>
-        <td style="text-align:right">Duration</td>
-        <td>
-          <input
-            type="range"
-            min="1"
-            max="60"
-            .value="${duration}"
-            style="width:100%"
-            @input=${durationChange}
-          />
-        </td>
-      </tr>
-    </table>
+    } else {
+      if (model.elapsed < model.duration) {
+        timer = setInterval(renderBody, 100);
+      }
+    }
+    return html`
+      <style>
+        td {
+          padding: 0.5em 1em;
+        }
+      </style>
+      <table>
+        <tr>
+          <td style="text-align:right">Elapsed time</td>
+          <td style="width:20em">
+            <progress
+              value=${model.elapsed}
+              max=${model.duration}
+              style="width:100%"
+            >
+              Progress:
+              ${Math.min(100, (100 * model.elapsed) / model.duration)}%
+            </progress>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align:right">Elapsed seconds</td>
+          <td>${model.elapsed}</td>
+        </tr>
+        <tr>
+          <td style="text-align:right">Duration</td>
+          <td>
+            <input
+              type="range"
+              min="1"
+              max="60"
+              .value="${model.duration}"
+              style="width:100%"
+              @input=${durationChange}
+            />
+          </td>
+        </tr>
+      </table>
 
-    <div class="pure-button pure-button-primary" @click=${reset}>Reset</div>
-  `;
+      <div class="pure-button pure-button-primary" @click=${model.reset}>
+        Reset
+      </div>
+    `;
+  };
 }
 
-function newCrud() {
-  let prefix = '';
-  let selected: number | undefined = undefined;
-  const nameList = ['Emil, Hans', 'Mustermann, Max', 'Tisch, Roman'];
-  const first = document.createElement('input');
-  const last = document.createElement('input');
-  first.type = 'text';
-  last.type = 'text';
-  const prefixChange = (e: InputEvent) => (prefix = e.target.value);
+function newCrud(model: Crud) {
+  const firstInput = document.createElement('input');
+  const lastInput = document.createElement('input');
+  firstInput.type = 'text';
+  lastInput.type = 'text';
+  const prefixChange = (e: InputEvent) => (model.prefix = e.target.value);
   function selectionChange(e: InputEvent) {
-    selected = Number(e.target.value);
-    const match = nameList[selected].match('([^,]*), (.*)');
-    last.value = match[1];
-    first.value = match[2];
+    setSelected(Number(e.target.value));
   }
-  function resetSelection() {
-    selected = undefined;
-    last.value = '';
-    first.value = '';
+  function setSelected(i: number | undefined) {
+    const { first, last } = model.setSelected(i);
+    lastInput.value = last;
+    firstInput.value = first;
   }
-  function create() {
-    nameList.push(last.value + ', ' + first.value);
-    resetSelection();
+  function deleteSelected() {
+    model.deleteSelected();
+    lastInput.value = '';
+    firstInput.value = '';
   }
-  const update = () => (nameList[selected] = last.value + ', ' + first.value);
-
-  function Delete() {
-    delete nameList[selected];
-    resetSelection();
-  }
+  const create = () => model.create(firstInput.value, lastInput.value);
+  const update = () => model.updateSelected(firstInput.value, lastInput.value);
   return () => html`
     <form class="pure-form pure-form-aligned">
       <div>
         <label>Filter prefix:</label>
-        <input type="text" .value=${prefix} @input=${prefixChange} />
+        <input type="text" .value=${model.prefix} @input=${prefixChange} />
       </div>
       <div>
         <select size="2" style="height:100px" @change=${selectionChange}>
-          ${nameList.map((name, i) =>
-            !prefix.length || name.startsWith(prefix)
-              ? html`
-                  <option value=${i}>${name}</option>
-                `
-              : html``
-          )}
+          ${model.mapPrefixFiltered(
+    (name, i) =>
+      html`
+                <option value=${i}>${name}</option>
+              `
+  )}
         </select>
         <fieldset style="display:inline-block;vertical-align:middle;">
-          <div class="pure-control-group"><label>Surname:</label>${last}</div>
-          <div class="pure-control-group"><label>Name:</label>${first}</div>
+          <div class="pure-control-group">
+            <label>Surname:</label>${lastInput}
+          </div>
+          <div class="pure-control-group">
+            <label>Name:</label>${firstInput}
+          </div>
         </fieldset>
       </div>
       <div>
@@ -197,14 +195,14 @@ function newCrud() {
         >
         <span
           class="pure-button pure-button-primary"
-          ?disabled=${selected === undefined}
+          ?disabled=${model.selected === undefined}
           @click=${update}
           >Update</span
         >
         <span
           class="pure-button pure-button-primary"
-          ?disabled=${selected === undefined}
-          @click=${Delete}
+          ?disabled=${model.selected === undefined}
+          @click=${deleteSelected}
           >Delete</span
         >
       </div>
@@ -222,76 +220,48 @@ interface State {
   circles: Circle[];
 }
 
-function newCircles() {
-  let state: State = { circles: [] };
-  const undo: State[] = [];
-  const redo: State[] = [];
-  function Undo() {
-    redo.push(state);
-    state = undo.pop();
-  }
-  function Redo() {
-    undo.push(state);
-    state = redo.pop();
-  }
-  function advanceState(nextState: State) {
-    undo.push(state);
-    state = nextState;
-    renderBody();
-  }
-
-  let selected: number | undefined = undefined;
+function newCircles(model: Circles) {
+  let circle: Circle | undefined = undefined;
   function selectCircle(this: SVGCircleElement, e: MouseEvent) {
-    selected = Number(this.dataset.index);
-    undo.push(state);
-    // New state with fresh copy of selected circle
-    state = { circles: [...state.circles] };
-    state.circles[selected] = { ...state.circles[selected] };
+    circle = model.getCircleForUpdate(Number(this.dataset.index));
     e.stopPropagation();
     renderBody();
   }
-  const adjustRadius = (this: HTMLInputElement, e: InputEvent) =>
-    (state.circles[selected!].r = Number(this.value));
+  function adjustRadius(this: HTMLInputElement, e: InputEvent) {
+    if (model.updating === undefined) throw new Error('Not updating');
+    circle!.r = Number(this.value);
+  }
   function newCircle(this: SVGElement, e: MouseEvent) {
-    if (selected !== undefined) {
-      undo.push(state);
-      selected = undefined;
-    }
     const svg = this.getBoundingClientRect();
-    advanceState({
-      circles: [
-        ...state.circles,
-        { x: e.x - svg.left, y: e.y - svg.top, r: 20 },
-      ],
-    });
+    model.push({ x: e.x - svg.left, y: e.y - svg.top, r: 20 });
   }
   return () => html`
     <div style="content-align:center">
       <span
         class="pure-button pure-button-primary"
-        ?disabled=${!undo.length}
-        @click=${Undo}
+        ?disabled=${!model.canUndo}
+        @click=${model.undo}
         >Undo</span
       >
       <span
         class="pure-button pure-button-primary"
-        ?disabled=${!redo.length}
-        @click=${Redo}
+        ?disabled=${!model.canRedo}
+        @click=${model.redo}
         >Redo</span
       >
     </div>
     <svg @click=${newCircle} style="border: 2px solid;">
-      ${state.circles.map(
-        ({ x, y, r }, index) =>
-          svg`
+      ${model.circles.map(
+    ({ x, y, r }, index) =>
+      svg`
           <circle cx=${x} cy=${y} r=${r} 
             style="fill:${
-              index === selected ? 'grey' : 'transparent'
-            };stroke-width: 1;stroke: black;transition: fill 0.2s ease 0s;"
+        index === model.updating ? 'grey' : 'transparent'
+        };stroke-width: 1;stroke: black;transition: fill 0.2s ease 0s;"
              data-index=${index}
              @click=${selectCircle}>
           </circle>`
-      )}
+  )}
     </svg>
     ${(({ x, y, r, display }) => html`
       <div class="pure-form" style="display:${display}">
@@ -299,16 +269,15 @@ function newCircles() {
         <input type="range" @input=${adjustRadius} .value=${r} />
       </div>
     `)(
-      selected === undefined
-        ? { x: 0, y: 0, r: 0, display: 'none' }
-        : { ...state.circles[selected], display: 'block' }
-    )}
+    model.updating === undefined
+      ? { x: 0, y: 0, r: 0, display: 'none' }
+      : { ...circle, display: 'block' }
+  )}
   `;
 }
 
-function newCells() {
+function newCells(sheet: Spreadsheet) {
   let selected: { i: number; j: number } | undefined = undefined;
-  const sheet = newSpreadsheet();
   const editableCell = document.createElement('td');
   editableCell.contentEditable = 'true';
   editableCell.addEventListener('keydown', keydown);
@@ -340,17 +309,17 @@ function newCells() {
         <tr style="background: rgb(246, 246, 246); user-select: none;">
           <th style="min-width:30px"></th>
           ${Array.from(
-            { length: 26 },
-            (_, i) => html`
+    { length: 26 },
+    (_, i) => html`
               <th style="min-width:64px; border: 1px solid rgb(187, 187, 187);">
                 ${String.fromCharCode(65 + i)}
               </th>
             `
-          )}
+  )}
         </tr>
         ${Array.from(
-          { length: 100 },
-          (_, i) => html`
+    { length: 100 },
+    (_, i) => html`
             <tr>
               <td
                 style="background: rgb(246, 246, 246); border: 1px solid rgb(187, 187, 187); user-select: none; text-align: center;"
@@ -358,24 +327,24 @@ function newCells() {
                 <b>${i}</b>
               </td>
               ${Array.from({ length: 26 }, (_, j) => {
-                return selected && selected.i === i && selected.j === j
-                  ? editableCell
-                  : html`
+      return selected && selected.i === i && selected.j === j
+        ? editableCell
+        : html`
                       <td
                         @click=${(e: MouseEvent) => {
-                          selected = { i, j };
-                          editableCell.innerText = sheet.cell(i, j);
-                          renderBody();
-                          editableCell.focus();
-                        }}
+            selected = { i, j };
+            editableCell.innerText = sheet.cell(i, j);
+            renderBody();
+            editableCell.focus();
+          }}
                       >
                         ${sheet.value(i, j)}
                       </td>
                     `;
-              })}
+    })}
             </tr>
           `
-        )}
+  )}
       </table>
     </div>
     <span>
@@ -387,13 +356,16 @@ function newCells() {
 }
 
 const examples = {
-  counter: { name: 'Counter', render: newCounter() },
-  converter: { name: 'Temperature Converter', render: newConverter() },
-  booker: { name: 'Flight Booker', render: newBooker() },
-  timer: { name: 'Timer', render: newTimer() },
-  crud: { name: 'CRUD', render: newCrud() },
-  drawer: { name: 'Circle Drawer', render: newCircles() },
-  cells: { name: 'Cells', render: newCells() },
+  counter: { name: 'Counter', render: newCounter(PAGE_MODEL.counter) },
+  converter: {
+    name: 'Temperature Converter',
+    render: newConverter(PAGE_MODEL.converter),
+  },
+  booker: { name: 'Flight Booker', render: newBooker(PAGE_MODEL.booker) },
+  timer: { name: 'Timer', render: newTimer(PAGE_MODEL.timer) },
+  crud: { name: 'CRUD', render: newCrud(PAGE_MODEL.crud) },
+  drawer: { name: 'Circle Drawer', render: newCircles(PAGE_MODEL.circles) },
+  cells: { name: 'Cells', render: newCells(PAGE_MODEL.cells) },
 };
 
 const renderBody = () =>
@@ -406,13 +378,13 @@ const renderBody = () =>
         <div class="pure-menu-heading">Examples</div>
         <ul class="pure-menu-list">
           ${Object.entries(examples).map(
-            ([k, { name }]) =>
-              html`
+      ([k, { name }]) =>
+        html`
                 <li class="pure-menu-item">
                   <a href="#${k}" class="pure-menu-link">${name}</a>
                 </li>
               `
-          )}
+    )}
         </ul>
       </div>
       <p></p>
@@ -420,17 +392,17 @@ const renderBody = () =>
         style="margin-left:auto; margin-right:auto; max-width:48em; color:#777"
       >
         ${Object.entries(examples).map(
-          ([k, { render }]) =>
-            html`
+      ([k, { render }]) =>
+        html`
               <div
                 style="${styleMap(
-                  '#' + k === window.location.hash ? {} : { display: 'none' }
-                )}"
+          '#' + k === window.location.hash ? {} : { display: 'none' }
+        )}"
               >
                 ${render()}
               </div>
             `
-        )}
+    )}
       </div>
     `,
     document.body
