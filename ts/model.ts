@@ -38,53 +38,26 @@ function newConverter() {
   } as Converter;
 }
 
-// Invariants:
-// (type == 'one-way flight') == (back == undefined)
-// (type == 'return flight') == (back >= outbound)
 export interface Booker {
-  type: 'one-way flight' | 'return flight';
   outbound: string;
   back: string | undefined;
   booked: boolean;
 }
 
 function newBooker() {
-  let type: 'one-way flight' | 'return flight' = 'one-way flight';
-  let outbound = new Date().toISOString().substr(0, 10); // match yyyy-MM-dd format used by date input
+  const outbound = new Date().toISOString().substr(0, 10); // match yyyy-MM-dd format used by date input
   let back: string | undefined = undefined;
   const booked = false;
-
-  function normalize() {
-    if (type === 'one-way flight') {
-      back = undefined;
-    } else if (back === undefined || back < outbound) {
-      back = outbound;
-    }
-  }
-
   return {
-    get type() {
-      return type;
-    },
-    set type(t: 'one-way flight' | 'return flight') {
-      type = t;
-      normalize();
-    },
-    get outbound() {
-      return outbound;
-    },
-    set outbound(o: string) {
-      outbound = o;
-      normalize();
-    },
+    outbound,
+    booked,
     get back() {
       return back;
     },
     set back(b: string | undefined) {
-      back = b;
-      normalize();
+      back = b === undefined || b > outbound ? b : outbound;
     },
-  } as Booker;
+  };
 }
 
 export interface Timer {
@@ -196,9 +169,9 @@ export interface Circle {
 
 export interface Circles {
   readonly circles: Circle[];
-  readonly updating: number | undefined;
-  push(circle: Circle): void;
-  getCircleForUpdate(i: number): Circle;
+  readonly updating: Circle | undefined;
+  addCircle(circle: Circle): void;
+  setCircleForUpdate(i: number): void;
   readonly canUndo: boolean;
   undo(): void;
   readonly canRedo: boolean;
@@ -207,7 +180,7 @@ export interface Circles {
 
 interface State {
   circles: Circle[];
-  updating?: number;
+  updating?: Circle;
 }
 
 function newCircles() {
@@ -221,14 +194,15 @@ function newCircles() {
     get updating() {
       return state.updating;
     },
-    push(circle: Circle) {
+    addCircle(circle: Circle) {
       undo.push(state);
       state = { circles: [...state.circles, circle] };
     },
-    getCircleForUpdate(i: number) {
+    setCircleForUpdate(i: number) {
       undo.push(state);
-      state = { ...state, updating: i };
-      return state.circles[i];
+      const updating = { ...state.circles[i] };
+      state = { circles: [...state.circles], updating };
+      state.circles[i] = updating;
     },
     get canUndo() {
       return undo.length > 0;
@@ -246,7 +220,7 @@ function newCircles() {
       undo.push(state);
       state = redo.pop() as State;
     },
-  } as Circles;
+  };
 }
 
 export const PAGE_MODEL = {

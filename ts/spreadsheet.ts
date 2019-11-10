@@ -43,7 +43,7 @@ export function newSpreadsheet(): Spreadsheet {
   const cells: Formula[][] = Array.from({ length: ROW_COUNT }, (_, i) =>
     Array.from({ length: COL_COUNT }, (_, j) => EMPTY_FORMULA)
   );
-  const deref = (row: number, col: number) => depth =>
+  const deref = (row: number, col: number) => (depth: number) =>
     depth > CELL_COUNT ? NaN : cells[row][col](depth + 1);
   return {
     value: (row, col) => cells[row][col].value(),

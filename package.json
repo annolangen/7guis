@@ -3,8 +3,9 @@
   "scripts": {
     "build": "parcel build index.html --public-url ./",
     "fix": "gts fix",
-    "run": "parcel index.html pure.html",
-    "test": "jest"
+    "run": "parcel index.html pure.html bulma.html",
+    "test": "jest",
+    "check": "tsc --noEmit"
   },
   "dependencies": {
     "lit-html": "^1.1.0"
