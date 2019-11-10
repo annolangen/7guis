@@ -1,4 +1,9 @@
-import { html, render, svg } from '../node_modules/lit-html/lit-html';
+import {
+  html,
+  render,
+  svg,
+  TemplateResult,
+} from '../node_modules/lit-html/lit-html';
 import { newSpreadsheet, Spreadsheet } from './spreadsheet';
 import { styleMap } from '../node_modules/lit-html/directives/style-map.js';
 import {
@@ -12,38 +17,52 @@ import {
   Circle,
 } from './model';
 
-const newCounter = (counter: Counter) => () => html`
-  <form class="pure-form">
-    <label>${counter.count}</label>
-    <div class="pure-button pure-button-primary" @click=${counter.incr}>
-      Count
+const labeledInput = (label: string | number, control: TemplateResult) => html`
+  <div class="field is-horizontal">
+    <div class="field-label is-normal">
+      <label class="label">${label}</label>
     </div>
-  </form>
+    <div class="field-body">
+      <div class="field">
+        <p class="control">
+          ${control}
+        </p>
+      </div>
+    </div>
+  </div>
 `;
+
+const newCounter = (counter: Counter) => () =>
+  labeledInput(
+    counter.count,
+    html`
+      <button class="button is-link" @click=${counter.incr}>Count</button>
+    `
+  );
 
 function newConverter(converter: Converter) {
   function setCelsius(this: HTMLInputElement) {
     converter.celsius = Number(this.value);
   }
   function setFahrenheit(this: HTMLInputElement) {
-    converter.fahrenheit = Number(this.value);
+    converter.fahrenheit = Math.round(Number(this.value) * 1.8 + 32);
   }
+  const li = (label: string, value: number, oninput: (e: InputEvent) => void) =>
+    labeledInput(
+      label,
+      html`
+        <input class="input" .value=${value} @input=${oninput} />
+      `
+    );
   return () => html`
-    <form class="pure-form">
-      <input id="celsius" .value="${converter.celsius}" @input=${setCelsius} />
-      <label for="celsius">Celsius =</label>
-      <input
-        id="fahrenheit"
-        .value="${converter.fahrenheit}"
-        @input=${setFahrenheit}
-      />
-      <label for="fahrenheit">Fahrenheit</label>
-    </form>
+    ${li('Celsius', converter.celsius, setCelsius)}
+    ${li('Fahrenheit', converter.fahrenheit, setFahrenheit)}
   `;
 }
 
 function newBooker(booker: Booker) {
   let type = 'one-way flight';
+
   function typeChange(this: HTMLInputElement) {
     type = this.value;
     booker.back = type === 'return flight' ? '' : undefined;
@@ -56,35 +75,43 @@ function newBooker(booker: Booker) {
   }
   const bookClick = () => (booker.booked = true);
   return () => html`
-    <form class="pure-form">
-      <fieldset class="pure-group">
-        <select class="pure-input-1-4" @change=${typeChange}>
-          <option>one-way flight</option>
-          <option>return flight</option>
-        </select>
+    <div class="field is-grouped is-grouped-multiline">
+      <div class="control">
+        <div class="select">
+          <select class="input" @change=${typeChange}>
+            <option>one-way flight</option>
+            <option>return flight</option>
+          </select>
+        </div>
+      </div>
+      <div class="control">
         <input
-          class="pure-input-1-4"
+          class="input"
           type="date"
           .value=${booker.outbound}
           @change=${outboundChange}
         />
+      </div>
+      <div class="control">
         <input
-          class="pure-input-1-4"
+          class="input"
           type="date"
           .value=${booker.back}
           @change=${returnChange}
           ?disabled=${booker.back === undefined}
         />
-        <div
-          class="pure-button pure-button-primary pure-input-1-4"
+      </div>
+      <div class="control">
+        <button
+          class="button is-link"
           ?disabled=${booker.back !== undefined &&
             booker.back <= booker.outbound}
           @click=${bookClick}
         >
           Book
-        </div>
-      </fieldset>
-    </form>
+        </button>
+      </div>
+    </div>
     <div style="display:${booker.booked ? 'block' : 'none'}">
       You have booked a ${type} on
       ${booker.outbound}${booker.back !== undefined
@@ -112,44 +139,40 @@ function newTimer(model: Timer) {
     }
     return html`
       <style>
-        td {
-          padding: 0.5em 1em;
-        }
+        #timer td {padding: 0.5em 1em}
+        #timer td:first-child {text-align: right}
       </style>
-      <table>
+      <table id="timer">
         <tr>
-          <td style="text-align:right">Elapsed time</td>
-          <td style="width:20em">
-            <progress
-              value=${model.elapsed}
-              max=${model.duration}
-              style="width:100%"
-            >
+          <td>Elapsed time</td>
+          <td>
+            <progress class="progress is-link" value=${model.elapsed} 
+            max=${model.duration} style="width:100%">
               Progress:
               ${Math.min(100, (100 * model.elapsed) / model.duration)}%
             </progress>
           </td>
         </tr>
         <tr>
-          <td style="text-align:right">Elapsed seconds</td>
+          <td>Elapsed seconds</td>
           <td>${model.elapsed}</td>
         </tr>
         <tr>
-          <td style="text-align:right">Duration</td>
+          <td>Duration</td>
           <td>
-            <input
+          <div class="field"><div class="control">
+            <input 
               type="range"
               min="1"
               max="60"
-              .value="${model.duration}"
-              style="width:100%"
+              .value=${model.duration}
               @input=${durationChange}
-            />
+            /></div></div>
           </td>
         </tr>
       </table>
 
-      <div class="pure-button pure-button-primary" @click=${model.reset}>
+      <button class="button is-link" @click=${model.reset}>
         Reset
       </div>
     `;
@@ -160,7 +183,9 @@ function newCrud(model: Crud) {
   const firstInput = document.createElement('input');
   const lastInput = document.createElement('input');
   firstInput.type = 'text';
+  firstInput.classList.add('input');
   lastInput.type = 'text';
+  lastInput.classList.add('input');
   function prefixChange(this: HTMLInputElement) {
     model.prefix = this.value;
   }
@@ -180,47 +205,70 @@ function newCrud(model: Crud) {
   const create = () => model.create(firstInput.value, lastInput.value);
   const update = () => model.updateSelected(firstInput.value, lastInput.value);
   return () => html`
-    <form class="pure-form pure-form-aligned">
-      <div>
-        <label>Filter prefix:</label>
-        <input type="text" .value=${model.prefix} @input=${prefixChange} />
+    ${labeledInput(
+      'Filter prefix',
+      html`
+        <input
+          type="text"
+          class="input"
+          .value=${model.prefix}
+          @input=${prefixChange}
+        />
+      `
+    )}
+    <div class="field">
+      <div class="control">
+        <div class="select" style="height:auto;width:100%">
+          <select
+            style="height:auto;width:100%"
+            size="5"
+            @change=${selectionChange}
+          >
+            ${model.mapPrefixFiltered(
+              (name, i) =>
+                html`
+                  <option value=${i}>${name}</option>
+                `
+            )}
+          </select>
+        </div>
       </div>
-      <div>
-        <select size="2" style="height:100px" @change=${selectionChange}>
-          ${model.mapPrefixFiltered(
-            (name, i) =>
-              html`
-                <option value=${i}>${name}</option>
-              `
-          )}
-        </select>
-        <fieldset style="display:inline-block;vertical-align:middle;">
-          <div class="pure-control-group">
-            <label>Surname:</label>${lastInput}
-          </div>
-          <div class="pure-control-group">
-            <label>Name:</label>${firstInput}
-          </div>
-        </fieldset>
+    </div>
+    ${labeledInput(
+      'Surname',
+      html`
+        <p class="control">${lastInput}</div>
+      `
+    )}
+    ${labeledInput(
+      'Name',
+      html`
+        <p class="control">${firstInput}</div>
+      `
+    )}
+    <div class="field is-grouped is-grouped-multiline">
+      <div class="control">
+        <button class="button is-link" @click=${create}>Create</button>
       </div>
-      <div>
-        <span class="pure-button pure-button-primary" @click=${create}
-          >Create</span
-        >
-        <span
-          class="pure-button pure-button-primary"
+      <div class="control">
+        <button
+          class="button is-link"
           ?disabled=${model.selected === undefined}
           @click=${update}
-          >Update</span
         >
-        <span
-          class="pure-button pure-button-primary"
+          Update
+        </button>
+      </div>
+      <div class="control">
+        <button
+          class="button is-link"
           ?disabled=${model.selected === undefined}
           @click=${deleteSelected}
-          >Delete</span
         >
+          Delete
+        </button>
       </div>
-    </form>
+    </div>
   `;
 }
 
@@ -229,31 +277,35 @@ function newCircles(model: Circles) {
     model.updating!.r = Number(this.value);
   }
   const radiusControl = ({ x, y, r }: Circle) => html`
-    <p class="pure-form">
-      <label>Adjust radius of circle at (${x}, ${y}):</label>
-      <input type="range" @input=${adjustRadius} .value=${r} />
-    </p>
+    <div>Adjust radius of circle at (${x}, ${y})</div>
+    <div class="field">
+      <div class="control">
+        <input type="range" @input=${adjustRadius} .value=${r} />
+      </div>
+    </div>
   `;
-  function newCircle(this: SVGElement, e: MouseEvent) {
+  function addCircle(this: SVGElement, e: MouseEvent) {
     const svg = this.getBoundingClientRect();
     model.addCircle({ x: e.x - svg.left, y: e.y - svg.top, r: 20 });
   }
   return () => html`
     <div style="content-align:center">
-      <span
-        class="pure-button pure-button-primary"
+      <button
+        class="button is-link"
         ?disabled=${!model.canUndo}
         @click=${model.undo}
-        >Undo</span
       >
-      <span
-        class="pure-button pure-button-primary"
+        Undo
+      </button>
+      <button
+        class="button is-link"
         ?disabled=${!model.canRedo}
         @click=${model.redo}
-        >Redo</span
       >
+        Redo
+      </button>
     </div>
-    <svg @click=${newCircle} style="border: 2px solid; width:100%; height:60ex">
+    <svg @click=${addCircle} style="border: 2px solid;">
       ${model.circles.map(
         (c, index) =>
           svg`
@@ -269,7 +321,7 @@ function newCircles(model: Circles) {
           </circle>`
       )}
     </svg>
-    ${model.updating === undefined ? html`` : radiusControl(model.updating)}
+    ${model.updating === undefined ? '' : radiusControl(model.updating)}
   `;
 }
 
@@ -304,17 +356,15 @@ function newCells(sheet: Spreadsheet) {
     <style>
       #sheet th {
         min-width: 6ch;
-        border: 1px solid #cbcbcb;
       }
       #sheet td:first-child,
       #sheet tr:first-child {
-        background-color: #f7f7f7;
         user-select: none;
         text-align: center;
       }
     </style>
-    <div style="height: 66ex;overflow:auto">
-      <table id="sheet" class="pure-table pure-table-bordered">
+    <div class="table-container" style="height:66ex;overflow:auto">
+      <table id="sheet" class="table is-bordered">
         <tr>
           <th style="min-width:1ch"></th>
           ${Array.from(
@@ -351,11 +401,11 @@ function newCells(sheet: Spreadsheet) {
         )}
       </table>
     </div>
-    <p>
+    <span>
       Click inside a cell to edit its content. Hit enter to apply. Click outside
       the cell or hit escape to abort. Here are some example contents: '5.5',
       'Some text', '=A1', '=sum(B2:C4)', '=div(C1, 5)'.
-    </p>
+    </span>
   `;
 }
 
@@ -375,17 +425,16 @@ const examples = {
 const renderBody = () =>
   render(
     html`
-      <div
-        class="pure-menu-scrollable pure-menu-horizontal"
-        style="height:32px;background-color:blanchedalmond"
-      >
-        <div class="pure-menu-heading">Examples</div>
-        <ul class="pure-menu-list">
+      <div class="tabs is-boxed">
+        <ul>
+          <li>Examples</li>
           ${Object.entries(examples).map(
             ([k, { name }]) =>
               html`
-                <li class="pure-menu-item">
-                  <a href="#${k}" class="pure-menu-link">${name}</a>
+                <li
+                  class=${'#' + k === window.location.hash ? 'is-active' : ''}
+                >
+                  <a href="#${k}">${name}</a>
                 </li>
               `
           )}

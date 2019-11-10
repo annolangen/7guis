@@ -273,10 +273,10 @@ function newCircles() {
     renderBody();
   }
   const radiusControl = ({ x, y, r }: Circle) => html`
-    <div class="pure-form">
+    <p class="pure-form">
       <label>Adjust radius of circle at (${x}, ${y}):</label>
       <input type="range" @input=${adjustRadius} .value=${r} />
-    </div>
+    </p>
   `;
   return () => html`
     <div style="content-align:center">
@@ -293,7 +293,7 @@ function newCircles() {
         >Redo</span
       >
     </div>
-    <svg @click=${newCircle} style="border: 2px solid;">
+    <svg @click=${newCircle} style="border: 2px solid; width:100%; height:60ex">
       ${state.map(
         ({ x, y, r }, index) =>
           svg`
@@ -340,7 +340,7 @@ function newCells() {
   return () => html`
     <style>
       #sheet th {
-        min-width: 64px;
+        min-width: 6ch;
         border: 1px solid #cbcbcb;
       }
       #sheet td:first-child,
@@ -350,10 +350,10 @@ function newCells() {
         text-align: center;
       }
     </style>
-    <div style="height: 30em;overflow:auto">
+    <div style="height: 66ex;overflow:auto">
       <table id="sheet" class="pure-table pure-table-bordered">
         <tr>
-          <th style="min-width:30px"></th>
+          <th style="min-width:1ch"></th>
           ${Array.from(
             { length: 26 },
             (_, i) =>
@@ -388,11 +388,11 @@ function newCells() {
         )}
       </table>
     </div>
-    <span>
-      Click inside a cell to edit its content.Hit enter to apply. Click outside
+    <p>
+      Click inside a cell to edit its content. Hit enter to apply. Click outside
       the cell or hit escape to abort. Here are some example contents: '5.5',
       'Some text', '=A1', '=sum(B2:C4)', '=div(C1, 5)'.
-    </span>
+    </p>
   `;
 }
 

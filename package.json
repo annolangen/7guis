@@ -3,7 +3,7 @@
   "scripts": {
     "build": "parcel build index.html --public-url ./",
     "fix": "gts fix",
-    "run": "parcel index.html pure.html bulma.html",
+    "run": "parcel index.html",
     "test": "jest",
     "check": "tsc --noEmit"
   },
