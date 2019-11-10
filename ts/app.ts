@@ -16,9 +16,12 @@ function newCounter() {
 
 function newConverter() {
   let temp = 32; // in Fahrenheit
-  const fahrenheitInput = (e: InputEvent) => (temp = Number(e.target.value));
-  const celsiusInput = (e: InputEvent) =>
-    (temp = Math.round(Number(e.target.value) * 1.8 + 32));
+  function fahrenheitInput(this: HTMLInputElement) {
+    temp = Number(this.value);
+  }
+  function celsiusInput(this: HTMLInputElement) {
+    temp = Math.round(Number(this.value) * 1.8 + 32);
+  }
   return () => html`
     <form class="pure-form">
       <input
@@ -38,12 +41,16 @@ function newBooker() {
   let out = new Date().toISOString().substr(0, 10); // match yyyy-MM-dd format used by date input
   let back = out;
   let booked = false;
-  const typeChange = (e: InputEvent) => (flightType = e.target.value);
-  const outboundChange = (e: InputEvent) => (out = e.target.value);
-  const returnChange = (e: InputEvent) => (back = e.target.value);
-
+  function typeChange(this: HTMLInputElement) {
+    flightType = this.value;
+  }
+  function outboundChange(this: HTMLInputElement) {
+    out = this.value;
+  }
+  function returnChange(this: HTMLInputElement) {
+    back = this.value;
+  }
   const bookClick = () => (booked = true);
-
   return () => html`
     <form class="pure-form">
       <fieldset class="pure-group">
@@ -94,7 +101,9 @@ function newTimer() {
     }
     renderBody();
   }
-  const durationChange = (e: InputEvent) => (duration = Number(e.target.value));
+  function durationChange(this: HTMLInputElement) {
+    duration = Number(this.value);
+  }
 
   function reset() {
     elapsed = 0;
@@ -148,12 +157,16 @@ function newCrud() {
   const last = document.createElement('input');
   first.type = 'text';
   last.type = 'text';
-  const prefixChange = (e: InputEvent) => (prefix = e.target.value);
-  function selectionChange(e: InputEvent) {
-    selected = Number(e.target.value);
+  function prefixChange(this: HTMLInputElement) {
+    prefix = this.value;
+  }
+  function selectionChange(this: HTMLInputElement) {
+    selected = Number(this.value);
     const match = nameList[selected].match('([^,]*), (.*)');
-    last.value = match[1];
-    first.value = match[2];
+    if (match) {
+      last.value = match[1];
+      first.value = match[2];
+    }
   }
   function resetSelection() {
     selected = undefined;
@@ -164,10 +177,10 @@ function newCrud() {
     nameList.push(last.value + ', ' + first.value);
     resetSelection();
   }
-  const update = () => (nameList[selected] = last.value + ', ' + first.value);
-
+  const update = () =>
+    (nameList[selected || 0] = last.value + ', ' + first.value);
   function Delete() {
-    delete nameList[selected];
+    delete nameList[selected || 0];
     resetSelection();
   }
   return () => html`
@@ -218,53 +231,53 @@ interface Circle {
   r: number;
 }
 
-interface State {
-  circles: Circle[];
-}
+type State = Circle[];
 
 function newCircles() {
-  let state: State = { circles: [] };
+  let state: State = [];
+  let selected: number | undefined = undefined;
   const undo: State[] = [];
   const redo: State[] = [];
+  function newCircle(this: SVGElement, e: MouseEvent) {
+    undo.push(state);
+    selected = undefined;
+    const svg = this.getBoundingClientRect();
+    state = [...state, { x: e.x - svg.left, y: e.y - svg.top, r: 20 }];
+  }
+  function adjustRadius(this: HTMLInputElement) {
+    state[selected!].r = Number(this.value);
+  }
+  function selectHandler(index: number) {
+    return selectCircle;
+    function selectCircle(this: SVGCircleElement, e: MouseEvent) {
+      selected = index;
+      undo.push(state);
+      // New state with fresh copy of selected circle
+      state = [...state];
+      state[selected] = { ...state[selected] };
+      e.stopPropagation(); // prevent creating a new circle in addition
+      renderBody();
+    }
+  }
   function Undo() {
     redo.push(state);
-    state = undo.pop();
+    state = undo.pop() as State;
   }
   function Redo() {
     undo.push(state);
-    state = redo.pop();
+    state = redo.pop() as State;
   }
   function advanceState(nextState: State) {
     undo.push(state);
     state = nextState;
     renderBody();
   }
-
-  let selected: number | undefined = undefined;
-  function selectCircle(this: SVGCircleElement, e: MouseEvent) {
-    selected = Number(this.dataset.index);
-    undo.push(state);
-    // New state with fresh copy of selected circle
-    state = { circles: [...state.circles] };
-    state.circles[selected] = { ...state.circles[selected] };
-    e.stopPropagation();
-    renderBody();
-  }
-  const adjustRadius = (this: HTMLInputElement, e: InputEvent) =>
-    (state.circles[selected!].r = Number(this.value));
-  function newCircle(this: SVGElement, e: MouseEvent) {
-    if (selected !== undefined) {
-      undo.push(state);
-      selected = undefined;
-    }
-    const svg = this.getBoundingClientRect();
-    advanceState({
-      circles: [
-        ...state.circles,
-        { x: e.x - svg.left, y: e.y - svg.top, r: 20 },
-      ],
-    });
-  }
+  const radiusControl = ({ x, y, r }: Circle) => html`
+    <div class="pure-form">
+      <label>Adjust radius of circle at (${x}, ${y}):</label>
+      <input type="range" @input=${adjustRadius} .value=${r} />
+    </div>
+  `;
   return () => html`
     <div style="content-align:center">
       <span
@@ -281,7 +294,7 @@ function newCircles() {
       >
     </div>
     <svg @click=${newCircle} style="border: 2px solid;">
-      ${state.circles.map(
+      ${state.map(
         ({ x, y, r }, index) =>
           svg`
           <circle cx=${x} cy=${y} r=${r} 
@@ -289,20 +302,11 @@ function newCircles() {
               index === selected ? 'grey' : 'transparent'
             };stroke-width: 1;stroke: black;transition: fill 0.2s ease 0s;"
              data-index=${index}
-             @click=${selectCircle}>
+             @click=${selectHandler(index)}>
           </circle>`
       )}
     </svg>
-    ${(({ x, y, r, display }) => html`
-      <div class="pure-form" style="display:${display}">
-        <label>Adjust radius of circle at (${x}, ${y}):</label>
-        <input type="range" @input=${adjustRadius} .value=${r} />
-      </div>
-    `)(
-      selected === undefined
-        ? { x: 0, y: 0, r: 0, display: 'none' }
-        : { ...state.circles[selected], display: 'block' }
-    )}
+    ${selected === undefined ? '' : radiusControl(state[selected])}
   `;
 }
 
@@ -335,28 +339,35 @@ function newCells() {
     }
   }
   return () => html`
+    <style>
+      #sheet th {
+        min-width: 64px;
+        border: 1px solid #cbcbcb;
+      }
+      #sheet td:first-child,
+      #sheet tr:first-child {
+        background-color: #f7f7f7;
+        user-select: none;
+        text-align: center;
+      }
+    </style>
     <div style="height: 30em;overflow:auto">
-      <table class="pure-table pure-table-bordered">
-        <tr style="background: rgb(246, 246, 246); user-select: none;">
+      <table id="sheet" class="pure-table pure-table-bordered">
+        <tr>
           <th style="min-width:30px"></th>
           ${Array.from(
             { length: 26 },
-            (_, i) => html`
-              <th style="min-width:64px; border: 1px solid rgb(187, 187, 187);">
-                ${String.fromCharCode(65 + i)}
-              </th>
-            `
+            (_, i) =>
+              html`
+                <th>${String.fromCharCode(65 + i)}</th>
+              `
           )}
         </tr>
         ${Array.from(
           { length: 100 },
           (_, i) => html`
             <tr>
-              <td
-                style="background: rgb(246, 246, 246); border: 1px solid rgb(187, 187, 187); user-select: none; text-align: center;"
-              >
-                <b>${i}</b>
-              </td>
+              <td><b>${i}</b></td>
               ${Array.from({ length: 26 }, (_, j) => {
                 return selected && selected.i === i && selected.j === j
                   ? editableCell
@@ -379,7 +390,7 @@ function newCells() {
       </table>
     </div>
     <span>
-      Click inside a cell to edit its content. Hit enter to apply. Click outside
+      Click inside a cell to edit its content.Hit enter to apply. Click outside
       the cell or hit escape to abort. Here are some example contents: '5.5',
       'Some text', '=A1', '=sum(B2:C4)', '=div(C1, 5)'.
     </span>
