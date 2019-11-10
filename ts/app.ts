@@ -301,7 +301,6 @@ function newCircles() {
             style="fill:${
               index === selected ? 'grey' : 'transparent'
             };stroke-width: 1;stroke: black;transition: fill 0.2s ease 0s;"
-             data-index=${index}
              @click=${selectHandler(index)}>
           </circle>`
       )}
