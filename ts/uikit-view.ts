@@ -18,25 +18,23 @@ import {
 } from './model';
 
 const labeledInput = (label: string | number, control: TemplateResult) => html`
-  <div class="field is-horizontal">
-    <div class="field-label is-normal">
-      <label class="label">${label}</label>
-    </div>
-    <div class="field-body">
-      <div class="field">
-        <p class="control">
-          ${control}
-        </p>
+  <form class="uk-form-horizontal">
+    <div>
+      <label class="uk-form-label">${label}</label>
+      <div class="uk-form-controls">
+        ${control}
       </div>
     </div>
-  </div>
+  </form>
 `;
 
 const newCounter = (counter: Counter) => () =>
   labeledInput(
     counter.count,
     html`
-      <button class="button is-link" @click=${counter.incr}>Count</button>
+      <button class="uk-button uk-button-primary" @click=${counter.incr}>
+        Count
+      </button>
     `
   );
 
@@ -51,7 +49,7 @@ function newConverter(converter: Converter) {
     labeledInput(
       label,
       html`
-        <input class="input" .value=${value} @input=${oninput} />
+        <input class="uk-input" .value=${value} @input=${oninput} />
       `
     );
   return () => html`
@@ -75,35 +73,33 @@ function newBooker(booker: Booker) {
   }
   const bookClick = () => (booker.booked = true);
   return () => html`
-    <div class="field is-grouped is-grouped-multiline">
-      <div class="control">
-        <div class="select">
-          <select class="input" @change=${typeChange}>
+    <form>
+      <div class="uk-form-controls">
+        <select class="uk-select" @change=${typeChange}>
             <option>one-way flight</option>
             <option>return flight</option>
-          </select>
-        </div>
+        </select>
       </div>
-      <div class="control">
+      <div class="uk-form-controls">
         <input
-          class="input"
+          class="uk-input"
           type="date"
           .value=${booker.outbound}
           @change=${outboundChange}
         />
       </div>
-      <div class="control">
+      <div class="uk-form-controls">
         <input
-          class="input"
+          class="uk-input"
           type="date"
           .value=${booker.back}
           @change=${returnChange}
           ?disabled=${booker.back === undefined}
         />
       </div>
-      <div class="control">
+      <div class="uk-form-controls">
         <button
-          class="button is-link"
+          class="uk-button uk-button-primary"
           ?disabled=${booker.back !== undefined &&
             booker.back <= booker.outbound}
           @click=${bookClick}
@@ -112,12 +108,12 @@ function newBooker(booker: Booker) {
         </button>
       </div>
     </div>
-    <div style="display:${booker.booked ? 'block' : 'none'}">
+    <p style="display:${booker.booked ? 'block' : 'none'}">
       You have booked a ${type} on
-      ${booker.outbound}${booker.back !== undefined
-        ? ' returning on ' + booker.back
-        : ''}.
-    </div>
+      ${booker.outbound}${
+    booker.back !== undefined ? ' returning on ' + booker.back : ''
+  }.
+    </p>
   `;
 }
 
@@ -138,41 +134,42 @@ function newTimer(model: Timer) {
       }
     }
     return html`
-      <style>
-        #timer td {padding: 0.5em 1em}
-        #timer td:first-child {text-align: right}
-      </style>
-      <table id="timer">
-        <tr>
-          <td>Elapsed time</td>
-          <td>
-            <progress class="progress is-link" value=${model.elapsed} 
-            max=${model.duration} style="width:100%">
+      ${[
+        labeledInput(
+          'Elapsed time',
+          html`
+            <progress
+              class="uk-progress"
+              value=${model.elapsed}
+              max=${model.duration}
+              style="width:100%"
+            >
               Progress:
               ${Math.min(100, (100 * model.elapsed) / model.duration)}%
             </progress>
-          </td>
-        </tr>
-        <tr>
-          <td>Elapsed seconds</td>
-          <td>${model.elapsed}</td>
-        </tr>
-        <tr>
-          <td>Duration</td>
-          <td>
-          <div class="field"><div class="control">
-            <input 
+          `
+        ),
+        labeledInput(
+          'Elapsed seconds',
+          html`
+            ${model.elapsed}
+          `
+        ),
+        labeledInput(
+          'Duration',
+          html`
+            <input
+              class="uk-range"
               type="range"
               min="1"
               max="60"
               .value=${model.duration}
               @input=${durationChange}
-            /></div></div>
-          </td>
-        </tr>
-      </table>
-
-      <button class="button is-link" @click=${model.reset}>
+            />
+          `
+        ),
+      ]}
+      <button class="uk-button uk-button-primary" @click=${model.reset}>
         Reset
       </div>
     `;
@@ -183,9 +180,9 @@ function newCrud(model: Crud) {
   const firstInput = document.createElement('input');
   const lastInput = document.createElement('input');
   firstInput.type = 'text';
-  firstInput.classList.add('input');
+  firstInput.classList.add('uk-input');
   lastInput.type = 'text';
-  lastInput.classList.add('input');
+  lastInput.classList.add('uk-input');
   function prefixChange(this: HTMLInputElement) {
     model.prefix = this.value;
   }
@@ -210,17 +207,17 @@ function newCrud(model: Crud) {
       html`
         <input
           type="text"
-          class="input"
+          class="uk-input"
           .value=${model.prefix}
           @input=${prefixChange}
         />
       `
     )}
-    <div class="field">
-      <div class="control">
-        <div class="select" style="height:auto;width:100%">
+    <form class="uk-form">
+      <div class="uk-form-controls">
+       
           <select
-            style="height:auto;width:100%"
+            class="uk-select"
             size="5"
             @change=${selectionChange}
           >
@@ -231,43 +228,39 @@ function newCrud(model: Crud) {
                 `
             )}
           </select>
-        </div>
+   
       </div>
-    </div>
+    </form>
     ${labeledInput(
       'Surname',
       html`
-        <p class="control">${lastInput}</div>
+        <p class="uk-form-controls">${lastInput}</div>
       `
     )}
     ${labeledInput(
       'Name',
       html`
-        <p class="control">${firstInput}</div>
+        <p class="uk-form-controls">${firstInput}</div>
       `
     )}
-    <div class="field is-grouped is-grouped-multiline">
-      <div class="control">
-        <button class="button is-link" @click=${create}>Create</button>
-      </div>
-      <div class="control">
+    <div>
+        <button class="uk-button uk-button-primary" @click=${create}>
+          Create
+        </button>
         <button
-          class="button is-link"
+          class="uk-button uk-button-primary"
           ?disabled=${model.selected === undefined}
           @click=${update}
         >
           Update
         </button>
-      </div>
-      <div class="control">
         <button
-          class="button is-link"
+          class="uk-button uk-button-primary"
           ?disabled=${model.selected === undefined}
           @click=${deleteSelected}
         >
           Delete
         </button>
-      </div>
     </div>
   `;
 }
@@ -291,14 +284,14 @@ function newCircles(model: Circles) {
   return () => html`
     <div style="content-align:center">
       <button
-        class="button is-link"
+        class="uk-button uk-button-primary"
         ?disabled=${!model.canUndo}
         @click=${model.undo}
       >
         Undo
       </button>
       <button
-        class="button is-link"
+        class="uk-button uk-button-primary"
         ?disabled=${!model.canRedo}
         @click=${model.redo}
       >
@@ -354,17 +347,16 @@ function newCells(sheet: Spreadsheet) {
   }
   return () => html`
     <style>
-      #sheet th {
+      #sheet tr:first-child th {
         min-width: 6ch;
       }
-      #sheet td:first-child,
-      #sheet tr:first-child {
+      #sheet .uk-table th {
         user-select: none;
         text-align: center;
       }
     </style>
-    <div class="table-container" style="height:66ex;overflow:auto">
-      <table id="sheet" class="table is-bordered">
+    <div style="height:66ex;overflow:auto">
+      <table id="sheet" class="uk-table" border>
         <tr>
           <th style="min-width:1ch"></th>
           ${Array.from(
@@ -379,7 +371,7 @@ function newCells(sheet: Spreadsheet) {
           { length: 100 },
           (_, i) => html`
             <tr>
-              <td><b>${i}</b></td>
+              <th>${i}</th>
               ${Array.from({ length: 26 }, (_, j) => {
                 return selected && selected.i === i && selected.j === j
                   ? editableCell
@@ -425,14 +417,13 @@ const examples = {
 const renderBody = () =>
   render(
     html`
-      <div class="tabs is-boxed">
-        <ul>
-          <li>Examples</li>
+        <ul class="uk-tab">
+          <li class="uk-disabled">Examples</li>
           ${Object.entries(examples).map(
             ([k, { name }]) =>
               html`
                 <li
-                  class=${'#' + k === window.location.hash ? 'is-active' : ''}
+                  class=${'#' + k === window.location.hash ? 'uk-active' : ''}
                 >
                   <a href="#${k}">${name}</a>
                 </li>
