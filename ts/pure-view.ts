@@ -56,27 +56,27 @@ function newBooker(booker: Booker) {
   }
   const bookClick = () => (booker.booked = true);
   return () => html`
-    <form class="pure-form">
+    <form class="pure-form" style="margin:auto;width:fit-content">
       <fieldset class="pure-group">
-        <select class="pure-input-1-4" @change=${typeChange}>
+        <select class="pure-input-1" @change=${typeChange}>
           <option>one-way flight</option>
           <option>return flight</option>
         </select>
         <input
-          class="pure-input-1-4"
+          class="pure-input-1"
           type="date"
           .value=${booker.outbound}
           @change=${outboundChange}
         />
         <input
-          class="pure-input-1-4"
+          class="pure-input-1"
           type="date"
           .value=${booker.back}
           @change=${returnChange}
           ?disabled=${booker.back === undefined}
         />
         <div
-          class="pure-button pure-button-primary pure-input-1-4"
+          class="pure-button pure-button-primary pure-input-1"
           ?disabled=${booker.back !== undefined &&
             booker.back <= booker.outbound}
           @click=${bookClick}

@@ -215,20 +215,14 @@ function newCrud(model: Crud) {
     )}
     <form class="uk-form">
       <div class="uk-form-controls">
-       
-          <select
-            class="uk-select"
-            size="5"
-            @change=${selectionChange}
-          >
-            ${model.mapPrefixFiltered(
-              (name, i) =>
-                html`
-                  <option value=${i}>${name}</option>
-                `
-            )}
-          </select>
-   
+        <select class="uk-select" size="5" @change=${selectionChange}>
+          ${model.mapPrefixFiltered(
+            (name, i) =>
+              html`
+                <option value=${i}>${name}</option>
+              `
+          )}
+        </select>
       </div>
     </form>
     ${labeledInput(
@@ -244,23 +238,23 @@ function newCrud(model: Crud) {
       `
     )}
     <div>
-        <button class="uk-button uk-button-primary" @click=${create}>
-          Create
-        </button>
-        <button
-          class="uk-button uk-button-primary"
-          ?disabled=${model.selected === undefined}
-          @click=${update}
-        >
-          Update
-        </button>
-        <button
-          class="uk-button uk-button-primary"
-          ?disabled=${model.selected === undefined}
-          @click=${deleteSelected}
-        >
-          Delete
-        </button>
+      <button class="uk-button uk-button-primary" @click=${create}>
+        Create
+      </button>
+      <button
+        class="uk-button uk-button-primary"
+        ?disabled=${model.selected === undefined}
+        @click=${update}
+      >
+        Update
+      </button>
+      <button
+        class="uk-button uk-button-primary"
+        ?disabled=${model.selected === undefined}
+        @click=${deleteSelected}
+      >
+        Delete
+      </button>
     </div>
   `;
 }
