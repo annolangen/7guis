@@ -112,7 +112,7 @@ function newBooker(booker: Booker) {
         </button>
       </div>
     </div>
-    <div style="display:${booker.booked ? 'block' : 'none'}">
+    <div ?hidden=${!booker.booked}>
       You have booked a ${type} on
       ${booker.outbound}${booker.back !== undefined
         ? ' returning on ' + booker.back
@@ -126,17 +126,19 @@ function newTimer(model: Timer) {
   function durationChange(this: HTMLInputElement) {
     model.duration = Number(this.value);
   }
-  return () => {
-    if (timer) {
-      if (model.elapsed >= model.duration) {
-        clearInterval(timer);
-        timer = null;
-      }
+  function getTimer() {
+    if (model.elapsed < model.duration) {
+      return timer ? timer : setInterval(renderBody, 100);
     } else {
-      if (model.elapsed < model.duration) {
-        timer = setInterval(renderBody, 100);
+      if (timer) {
+        clearInterval(timer);
+        return null;
       }
+      return timer;
     }
+  }
+  return () => {
+    timer = getTimer();
     return html`
       <style>
         #timer td {padding: 0.5em 1em}
@@ -447,11 +449,7 @@ const renderBody = () =>
         ${Object.entries(examples).map(
           ([k, { render }]) =>
             html`
-              <div
-                style="${styleMap(
-                  '#' + k === window.location.hash ? {} : { display: 'none' }
-                )}"
-              >
+              <div ?hidden=${'#' + k !== window.location.hash}>
                 ${render()}
               </div>
             `

@@ -80,7 +80,7 @@ function newBooker() {
         </div>
       </fieldset>
     </form>
-    <div style="display:${booked ? 'block' : 'none'}">
+    <div ?hidden=${!booked}>
       You have booked a ${flightType} on
       ${out}${flightType !== 'one-way flight' ? ' returning on ' + back : ''}.
     </div>
@@ -90,63 +90,65 @@ function newBooker() {
 function newTimer() {
   let elapsed = 0;
   let duration = 25;
-  let timer: number | null = setInterval(tick, 100);
-  function tick() {
-    if (elapsed < duration) {
-      elapsed = Math.round(10 * elapsed + 1) / 10;
-    } else {
-      elapsed = duration;
-      clearInterval(timer!);
-      timer = null;
-    }
+  let timer: number | null;
+  const tick = () => {
+    elapsed = Math.round(10 * elapsed + 1) / 10;
     renderBody();
-  }
+  };
+  const getTimer = () => {
+    if (elapsed < duration) {
+      return timer ? timer : setInterval(tick, 100);
+    } else {
+      if (timer) {
+        clearInterval(timer);
+        return null;
+      }
+      return timer;
+    }
+  };
   function durationChange(this: HTMLInputElement) {
     duration = Number(this.value);
   }
+  const reset = () => (elapsed = 0);
+  return () => {
+    timer = getTimer();
+    return html`
+      <style>
+        td {
+          padding: 0.5em 1em;
+        }
+      </style>
+      <table>
+        <tr>
+          <td style="text-align:right">Elapsed time</td>
+          <td style="width:20em">
+            <progress value=${elapsed} max=${duration} style="width:100%">
+              Progress: ${Math.min(100, (100 * elapsed) / duration)}%
+            </progress>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align:right">Elapsed seconds</td>
+          <td>${elapsed}</td>
+        </tr>
+        <tr>
+          <td style="text-align:right">Duration</td>
+          <td>
+            <input
+              type="range"
+              min="1"
+              max="60"
+              .value="${duration}"
+              style="width:100%"
+              @input=${durationChange}
+            />
+          </td>
+        </tr>
+      </table>
 
-  function reset() {
-    elapsed = 0;
-    if (!timer) {
-      timer = setInterval(tick, 100);
-    }
-  }
-  return () => html`
-    <style>
-      td {
-        padding: 0.5em 1em;
-      }
-    </style>
-    <table>
-      <tr>
-        <td style="text-align:right">Elapsed time</td>
-        <td style="width:20em">
-          <progress value=${elapsed} max=${duration} style="width:100%">
-            Progress: ${Math.min(100, (100 * elapsed) / duration)}%
-          </progress>
-        </td>
-      </tr>
-      <tr>
-        <td style="text-align:right">Elapsed seconds</td>
-        <td>${elapsed}</td>
-      </tr>
-      <tr>
-        <td style="text-align:right">Duration</td>
-        <td>
-          <input
-            type="range"
-            min="1"
-            max="60"
-            .value="${duration}"
-            style="width:100%"
-            @input=${durationChange}
-          />
-        </td>
-      </tr>
-    </table>
-
-    <div class="pure-button pure-button-primary" @click=${reset}>Reset</div>
-  `;
+      <div class="pure-button pure-button-primary" @click=${reset}>Reset</div>
+    `;
+  };
 }
 
 function newCrud() {
@@ -432,11 +434,7 @@ const renderBody = () =>
         ${Object.entries(examples).map(
           ([k, { render }]) =>
             html`
-              <div
-                style="${styleMap(
-                  '#' + k === window.location.hash ? {} : { display: 'none' }
-                )}"
-              >
+              <div ?hidden=${'#' + k !== window.location.hash}>
                 ${render()}
               </div>
             `

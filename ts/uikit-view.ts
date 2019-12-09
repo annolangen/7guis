@@ -108,7 +108,7 @@ function newBooker(booker: Booker) {
         </button>
       </div>
     </div>
-    <p style="display:${booker.booked ? 'block' : 'none'}">
+    <p ?hidden=${!booker.booked}>
       You have booked a ${type} on
       ${booker.outbound}${
     booker.back !== undefined ? ' returning on ' + booker.back : ''
@@ -432,11 +432,7 @@ const renderBody = () =>
         ${Object.entries(examples).map(
           ([k, { render }]) =>
             html`
-              <div
-                style="${styleMap(
-                  '#' + k === window.location.hash ? {} : { display: 'none' }
-                )}"
-              >
+              <div ?hidden=${'#' + k !== window.location.hash}>
                 ${render()}
               </div>
             `

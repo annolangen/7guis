@@ -85,7 +85,7 @@ function newBooker(booker: Booker) {
         </div>
       </fieldset>
     </form>
-    <div style="display:${booker.booked ? 'block' : 'none'}">
+    <div ?hidden=${!booker.booked}>
       You have booked a ${type} on
       ${booker.outbound}${booker.back !== undefined
         ? ' returning on ' + booker.back
@@ -398,11 +398,7 @@ const renderBody = () =>
         ${Object.entries(examples).map(
           ([k, { render }]) =>
             html`
-              <div
-                style="${styleMap(
-                  '#' + k === window.location.hash ? {} : { display: 'none' }
-                )}"
-              >
+              <div ?hidden=${'#' + k !== window.location.hash}>
                 ${render()}
               </div>
             `
