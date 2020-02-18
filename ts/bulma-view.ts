@@ -17,7 +17,10 @@ import {
   Circle,
 } from './model';
 
-const labeledInput = (label: string | number, control: TemplateResult) => html`
+const labeledInput = (
+  label: string | number,
+  control: TemplateResult | string | number
+) => html`
   <div class="field is-horizontal">
     <div class="field-label is-normal">
       <label class="label">${label}</label>
@@ -45,7 +48,7 @@ function newConverter(converter: Converter) {
     converter.celsius = Number(this.value);
   }
   function setFahrenheit(this: HTMLInputElement) {
-    converter.fahrenheit = Math.round(Number(this.value) * 1.8 + 32);
+    converter.fahrenheit = Number(this.value);
   }
   const li = (label: string, value: number, oninput: (e: InputEvent) => void) =>
     labeledInput(
@@ -75,7 +78,7 @@ function newBooker(booker: Booker) {
   }
   const bookClick = () => (booker.booked = true);
   return () => html`
-    <div class="field is-grouped is-grouped-multiline">
+    <div class="field is-grouped is-grouped-multiline" style="width:fit-content;margin:auto">
       <div class="control">
         <div class="select">
           <select class="input" @change=${typeChange}>
@@ -141,42 +144,49 @@ function newTimer(model: Timer) {
     timer = getTimer();
     return html`
       <style>
-        #timer td {padding: 0.5em 1em}
-        #timer td:first-child {text-align: right}
+        #timer .field {
+          align-items: baseline;
+        }
       </style>
-      <table id="timer">
-        <tr>
-          <td>Elapsed time</td>
-          <td>
-            <progress class="progress is-link" value=${model.elapsed} 
-            max=${model.duration} style="width:100%">
-              Progress:
-              ${Math.min(100, (100 * model.elapsed) / model.duration)}%
-            </progress>
-          </td>
-        </tr>
-        <tr>
-          <td>Elapsed seconds</td>
-          <td>${model.elapsed}</td>
-        </tr>
-        <tr>
-          <td>Duration</td>
-          <td>
-          <div class="field"><div class="control">
-            <input 
-              type="range"
-              min="1"
-              max="60"
-              .value=${model.duration}
-              @input=${durationChange}
-            /></div></div>
-          </td>
-        </tr>
-      </table>
-
-      <button class="button is-link" @click=${model.reset}>
-        Reset
-      </div>
+      <span id="timer">
+        ${[
+          labeledInput(
+            'Elapsed time',
+            html`
+              <progress
+                class="progress is-link"
+                value=${model.elapsed}
+                max=${model.duration}
+              >
+                Progress:
+                ${Math.min(100, (100 * model.elapsed) / model.duration)}%
+              </progress>
+            `
+          ),
+          labeledInput('Elapsed seconds', model.elapsed),
+          labeledInput(
+            'Duration',
+            html`
+              <input
+                type="range"
+                min="1"
+                max="60"
+                .value=${model.duration}
+                @input=${durationChange}
+                style="width:100%"
+              />
+            `
+          ),
+          labeledInput(
+            '',
+            html`
+              <button class="button is-link" @click=${model.reset}>
+                Reset
+              </button>
+            `
+          ),
+        ]}
+      </span>
     `;
   };
 }
@@ -427,7 +437,7 @@ const examples = {
 const renderBody = () =>
   render(
     html`
-      <div class="tabs is-boxed">
+      <nav class="tabs">
         <ul>
           <li>Examples</li>
           ${Object.entries(examples).map(
@@ -441,11 +451,8 @@ const renderBody = () =>
               `
           )}
         </ul>
-      </div>
-      <p></p>
-      <div
-        style="margin-left:auto; margin-right:auto; max-width:48em; color:#777"
-      >
+      </nav>
+      <main class="container" style="max-width:48em">
         ${Object.entries(examples).map(
           ([k, { render }]) =>
             html`
@@ -454,7 +461,7 @@ const renderBody = () =>
               </div>
             `
         )}
-      </div>
+      </main>
     `,
     document.body
   );
