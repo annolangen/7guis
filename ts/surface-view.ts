@@ -108,7 +108,7 @@ function newTimer(model: Timer) {
   function durationChange(this: HTMLInputElement) {
     model.duration = Number(this.value);
   }
-  function row(label: string, value: TemplateResult | string) {
+  function row(label: string, value: TemplateResult | string | number) {
     return html`
       <div><label style="width:20%">${label}</label> ${value}</div>
     `;
@@ -159,8 +159,8 @@ function newTimer(model: Timer) {
 }
 
 function newCrud(model: Crud) {
-  const surname = '';
-  const name = '';
+  let surname = '';
+  let name = '';
   function prefixChange(this: HTMLInputElement) {
     model.prefix = this.value;
   }

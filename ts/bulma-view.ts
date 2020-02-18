@@ -78,7 +78,10 @@ function newBooker(booker: Booker) {
   }
   const bookClick = () => (booker.booked = true);
   return () => html`
-    <div class="field is-grouped is-grouped-multiline" style="width:fit-content;margin:auto">
+    <div
+      class="field is-grouped is-grouped-multiline"
+      style="width:fit-content;margin:auto"
+    >
       <div class="control">
         <div class="select">
           <select class="input" @change=${typeChange}>
