@@ -1,4 +1,4 @@
-import { newSpreadsheet } from './spreadsheet';
+import { newSpreadsheet } from "./spreadsheet";
 
 export interface Counter {
   readonly count: number;
@@ -45,7 +45,7 @@ export interface Booker {
 }
 
 function newBooker() {
-  const outbound = new Date().toISOString().substr(0, 10); // match yyyy-MM-dd format used by date input
+  const outbound = new Date().toISOString().slice(0, 10); // match yyyy-MM-dd format used by date input
   let back: string | undefined = undefined;
   const booked = false;
   return {
@@ -116,18 +116,18 @@ export interface Crud {
 }
 
 function newCrud() {
-  let prefix = '';
+  let prefix = "";
   let selected: number | undefined = undefined;
-  const nameList = ['Emil, Hans', 'Mustermann, Max', 'Tisch, Roman'];
+  const nameList = ["Emil, Hans", "Mustermann, Max", "Tisch, Roman"];
   function setSelected(i: number | undefined) {
     selected = i;
     if (i !== undefined) {
-      const match = nameList[i].match('([^,]*), (.*)');
+      const match = nameList[i].match("([^,]*), (.*)");
       if (match) {
         return { first: match[2], last: match[1] };
       }
     }
-    return { first: '', last: '' };
+    return { first: "", last: "" };
   }
   return {
     get prefix() {
@@ -150,10 +150,10 @@ function newCrud() {
     setSelected,
     create(first: string, last: string) {
       selected = nameList.length;
-      nameList.push(last + ', ' + first);
+      nameList.push(last + ", " + first);
     },
     updateSelected: (first: string, last: string) =>
-      (nameList[selected || 0] = last + ', ' + first),
+      (nameList[selected || 0] = last + ", " + first),
     deleteSelected() {
       delete nameList[selected || 0];
       setSelected(undefined);
@@ -208,7 +208,7 @@ function newCircles() {
       return undo.length > 0;
     },
     undo() {
-      if (!undo.length) throw new Error('empty undo');
+      if (!undo.length) throw new Error("empty undo");
       redo.push(state);
       state = undo.pop() as State;
     },
@@ -216,7 +216,7 @@ function newCircles() {
       return redo.length > 0;
     },
     redo() {
-      if (!redo.length) throw new Error('empty redo');
+      if (!redo.length) throw new Error("empty redo");
       undo.push(state);
       state = redo.pop() as State;
     },

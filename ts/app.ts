@@ -1,6 +1,5 @@
-import { html, render, svg } from '../node_modules/lit-html/lit-html';
-import { newSpreadsheet } from './spreadsheet';
-import { styleMap } from '../node_modules/lit-html/directives/style-map.js';
+import { html, render, svg } from "../node_modules/lit-html/lit-html";
+import { newSpreadsheet } from "./spreadsheet";
 
 function newCounter() {
   let count = 0;
@@ -37,7 +36,7 @@ function newConverter() {
 }
 
 function newBooker() {
-  let flightType = 'one-way flight';
+  let flightType = "one-way flight";
   let out = new Date().toISOString().substr(0, 10); // match yyyy-MM-dd format used by date input
   let back = out;
   let booked = false;
@@ -69,11 +68,11 @@ function newBooker() {
           type="date"
           .value=${back}
           @change=${returnChange}
-          ?disabled=${flightType === 'one-way flight'}
+          ?disabled=${flightType === "one-way flight"}
         />
         <div
           class="pure-button pure-button-primary pure-input-1"
-          ?disabled=${flightType !== 'one-way flight' && back <= out}
+          ?disabled=${flightType !== "one-way flight" && back <= out}
           @click=${bookClick}
         >
           Book
@@ -82,7 +81,7 @@ function newBooker() {
     </form>
     <div ?hidden=${!booked}>
       You have booked a ${flightType} on
-      ${out}${flightType !== 'one-way flight' ? ' returning on ' + back : ''}.
+      ${out}${flightType !== "one-way flight" ? " returning on " + back : ""}.
     </div>
   `;
 }
@@ -152,19 +151,19 @@ function newTimer() {
 }
 
 function newCrud() {
-  let prefix = '';
+  let prefix = "";
   let selected: number | undefined = undefined;
-  const nameList = ['Emil, Hans', 'Mustermann, Max', 'Tisch, Roman'];
-  const first = document.createElement('input');
-  const last = document.createElement('input');
-  first.type = 'text';
-  last.type = 'text';
+  const nameList = ["Emil, Hans", "Mustermann, Max", "Tisch, Roman"];
+  const first = document.createElement("input");
+  const last = document.createElement("input");
+  first.type = "text";
+  last.type = "text";
   function prefixChange(this: HTMLInputElement) {
     prefix = this.value;
   }
   function selectionChange(this: HTMLInputElement) {
     selected = Number(this.value);
-    const match = nameList[selected].match('([^,]*), (.*)');
+    const match = nameList[selected].match("([^,]*), (.*)");
     if (match) {
       last.value = match[1];
       first.value = match[2];
@@ -172,15 +171,15 @@ function newCrud() {
   }
   function resetSelection() {
     selected = undefined;
-    last.value = '';
-    first.value = '';
+    last.value = "";
+    first.value = "";
   }
   function create() {
-    nameList.push(last.value + ', ' + first.value);
+    nameList.push(last.value + ", " + first.value);
     resetSelection();
   }
   const update = () =>
-    (nameList[selected || 0] = last.value + ', ' + first.value);
+    (nameList[selected || 0] = last.value + ", " + first.value);
   function Delete() {
     delete nameList[selected || 0];
     resetSelection();
@@ -195,9 +194,7 @@ function newCrud() {
         <select size="2" style="height:100px" @change=${selectionChange}>
           ${nameList.map((name, i) =>
             !prefix.length || name.startsWith(prefix)
-              ? html`
-                  <option value=${i}>${name}</option>
-                `
+              ? html` <option value=${i}>${name}</option> `
               : html``
           )}
         </select>
@@ -269,11 +266,6 @@ function newCircles() {
     undo.push(state);
     state = redo.pop() as State;
   }
-  function advanceState(nextState: State) {
-    undo.push(state);
-    state = nextState;
-    renderBody();
-  }
   const radiusControl = ({ x, y, r }: Circle) => html`
     <p class="pure-form">
       <label>Adjust radius of circle at (${x}, ${y}):</label>
@@ -301,22 +293,22 @@ function newCircles() {
           svg`
           <circle cx=${x} cy=${y} r=${r} 
             style="fill:${
-              index === selected ? 'grey' : 'transparent'
+              index === selected ? "grey" : "transparent"
             };stroke-width: 1;stroke: black;transition: fill 0.2s ease 0s;"
              @click=${selectHandler(index)}>
           </circle>`
       )}
     </svg>
-    ${selected === undefined ? '' : radiusControl(state[selected])}
+    ${selected === undefined ? "" : radiusControl(state[selected])}
   `;
 }
 
 function newCells() {
   let selected: { i: number; j: number } | undefined = undefined;
   const sheet = newSpreadsheet();
-  const editableCell = document.createElement('td');
-  editableCell.contentEditable = 'true';
-  editableCell.addEventListener('keydown', keydown);
+  const editableCell = document.createElement("td");
+  editableCell.contentEditable = "true";
+  editableCell.addEventListener("keydown", keydown);
   const hookByKey: { [key: string]: (i: number, j: number) => void } = {
     Enter: (i, j) => (selected = undefined),
     ArrowRight: (i, j) => j < 26 && (selected!.j += 1),
@@ -358,10 +350,7 @@ function newCells() {
           <th style="min-width:1ch"></th>
           ${Array.from(
             { length: 26 },
-            (_, i) =>
-              html`
-                <th>${String.fromCharCode(65 + i)}</th>
-              `
+            (_, i) => html` <th>${String.fromCharCode(65 + i)}</th> `
           )}
         </tr>
         ${Array.from(
@@ -399,13 +388,13 @@ function newCells() {
 }
 
 const examples = {
-  counter: { name: 'Counter', render: newCounter() },
-  converter: { name: 'Temperature Converter', render: newConverter() },
-  booker: { name: 'Flight Booker', render: newBooker() },
-  timer: { name: 'Timer', render: newTimer() },
-  crud: { name: 'CRUD', render: newCrud() },
-  drawer: { name: 'Circle Drawer', render: newCircles() },
-  cells: { name: 'Cells', render: newCells() },
+  counter: { name: "Counter", render: newCounter() },
+  converter: { name: "Temperature Converter", render: newConverter() },
+  booker: { name: "Flight Booker", render: newBooker() },
+  timer: { name: "Timer", render: newTimer() },
+  crud: { name: "CRUD", render: newCrud() },
+  drawer: { name: "Circle Drawer", render: newCircles() },
+  cells: { name: "Cells", render: newCells() },
 };
 
 const renderBody = () =>
@@ -418,12 +407,11 @@ const renderBody = () =>
         <div class="pure-menu-heading">Examples</div>
         <ul class="pure-menu-list">
           ${Object.entries(examples).map(
-            ([k, { name }]) =>
-              html`
-                <li class="pure-menu-item">
-                  <a href="#${k}" class="pure-menu-link">${name}</a>
-                </li>
-              `
+            ([k, { name }]) => html`
+              <li class="pure-menu-item">
+                <a href="#${k}" class="pure-menu-link">${name}</a>
+              </li>
+            `
           )}
         </ul>
       </div>
@@ -432,12 +420,9 @@ const renderBody = () =>
         style="margin-left:auto; margin-right:auto; max-width:48em; color:#777"
       >
         ${Object.entries(examples).map(
-          ([k, { render }]) =>
-            html`
-              <div ?hidden=${'#' + k !== window.location.hash}>
-                ${render()}
-              </div>
-            `
+          ([k, { render }]) => html`
+            <div ?hidden=${"#" + k !== window.location.hash}>${render()}</div>
+          `
         )}
       </div>
     `,
@@ -445,10 +430,10 @@ const renderBody = () =>
   );
 
 if (!window.location.hash) {
-  window.location.hash = 'counter';
+  window.location.hash = "counter";
 }
 renderBody();
-window.addEventListener('change', renderBody);
-window.addEventListener('click', renderBody);
-window.addEventListener('hashchange', renderBody);
-window.addEventListener('input', renderBody);
+window.addEventListener("change", renderBody);
+window.addEventListener("click", renderBody);
+window.addEventListener("hashchange", renderBody);
+window.addEventListener("input", renderBody);
