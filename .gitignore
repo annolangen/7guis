@@ -1,7 +1,8 @@
-node_modules
 *.bak
 .cache
-dist
 .idea
 .parcel-cache
+build
+dist
+node_modules
 package-lock.json

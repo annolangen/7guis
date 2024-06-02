@@ -1,10 +1,5 @@
-import {
-  html,
-  render,
-  svg,
-  TemplateResult,
-} from "../node_modules/lit-html/lit-html";
-import { Spreadsheet } from "./spreadsheet";
+import {html, render, svg, TemplateResult} from 'lit-html';
+import {Spreadsheet} from './spreadsheet';
 import {
   PAGE_MODEL,
   Counter,
@@ -14,7 +9,7 @@ import {
   Crud,
   Circles,
   Circle,
-} from "./model";
+} from './model';
 
 const labeledInput = (label: string | number, control: TemplateResult) => html`
   <form class="uk-form-horizontal">
@@ -48,17 +43,17 @@ function newConverter(converter: Converter) {
       html` <input class="uk-input" .value=${value} @input=${oninput} /> `
     );
   return () => html`
-    ${li("Celsius", converter.celsius, setCelsius)}
-    ${li("Fahrenheit", converter.fahrenheit, setFahrenheit)}
+    ${li('Celsius', converter.celsius, setCelsius)}
+    ${li('Fahrenheit', converter.fahrenheit, setFahrenheit)}
   `;
 }
 
 function newBooker(booker: Booker) {
-  let type = "one-way flight";
+  let type = 'one-way flight';
 
   function typeChange(this: HTMLInputElement) {
     type = this.value;
-    booker.back = type === "return flight" ? "" : undefined;
+    booker.back = type === 'return flight' ? '' : undefined;
   }
   function outboundChange(this: HTMLInputElement) {
     booker.outbound = this.value;
@@ -107,14 +102,14 @@ function newBooker(booker: Booker) {
     <p ?hidden=${!booker.booked}>
       You have booked a ${type} on
       ${booker.outbound}${
-        booker.back !== undefined ? " returning on " + booker.back : ""
+        booker.back !== undefined ? ' returning on ' + booker.back : ''
       }.
     </p>
   `;
 }
 
 function newTimer(model: Timer) {
-  let timer: number | null = null;
+  let timer: number | NodeJS.Timeout | null = null;
   function durationChange(this: HTMLInputElement) {
     model.duration = Number(this.value);
   }
@@ -132,7 +127,7 @@ function newTimer(model: Timer) {
     return html`
       ${[
         labeledInput(
-          "Elapsed time",
+          'Elapsed time',
           html`
             <progress
               class="uk-progress"
@@ -145,9 +140,9 @@ function newTimer(model: Timer) {
             </progress>
           `
         ),
-        labeledInput("Elapsed seconds", html` ${model.elapsed} `),
+        labeledInput('Elapsed seconds', html` ${model.elapsed} `),
         labeledInput(
-          "Duration",
+          'Duration',
           html`
             <input
               class="uk-range"
@@ -168,12 +163,12 @@ function newTimer(model: Timer) {
 }
 
 function newCrud(model: Crud) {
-  const firstInput = document.createElement("input");
-  const lastInput = document.createElement("input");
-  firstInput.type = "text";
-  firstInput.classList.add("uk-input");
-  lastInput.type = "text";
-  lastInput.classList.add("uk-input");
+  const firstInput = document.createElement('input');
+  const lastInput = document.createElement('input');
+  firstInput.type = 'text';
+  firstInput.classList.add('uk-input');
+  lastInput.type = 'text';
+  lastInput.classList.add('uk-input');
   function prefixChange(this: HTMLInputElement) {
     model.prefix = this.value;
   }
@@ -181,20 +176,20 @@ function newCrud(model: Crud) {
     setSelected(Number(this.value));
   }
   function setSelected(i: number | undefined) {
-    const { first, last } = model.setSelected(i);
+    const {first, last} = model.setSelected(i);
     lastInput.value = last;
     firstInput.value = first;
   }
   function deleteSelected() {
     model.deleteSelected();
-    lastInput.value = "";
-    firstInput.value = "";
+    lastInput.value = '';
+    firstInput.value = '';
   }
   const create = () => model.create(firstInput.value, lastInput.value);
   const update = () => model.updateSelected(firstInput.value, lastInput.value);
   return () => html`
     ${labeledInput(
-      "Filter prefix",
+      'Filter prefix',
       html`
         <input
           type="text"
@@ -214,13 +209,13 @@ function newCrud(model: Crud) {
       </div>
     </form>
     ${labeledInput(
-      "Surname",
+      'Surname',
       html`
         <p class="uk-form-controls">${lastInput}</div>
       `
     )}
     ${labeledInput(
-      "Name",
+      'Name',
       html`
         <p class="uk-form-controls">${firstInput}</div>
       `
@@ -251,7 +246,7 @@ function newCircles(model: Circles) {
   function adjustRadius(this: HTMLInputElement) {
     model.updating!.r = Number(this.value);
   }
-  const radiusControl = ({ x, y, r }: Circle) => html`
+  const radiusControl = ({x, y, r}: Circle) => html`
     <div>Adjust radius of circle at (${x}, ${y})</div>
     <div class="field">
       <div class="control">
@@ -261,7 +256,7 @@ function newCircles(model: Circles) {
   `;
   function addCircle(this: SVGElement, e: MouseEvent) {
     const svg = this.getBoundingClientRect();
-    model.addCircle({ x: e.x - svg.left, y: e.y - svg.top, r: 20 });
+    model.addCircle({x: e.x - svg.left, y: e.y - svg.top, r: 20});
   }
   return () => html`
     <div style="content-align:center">
@@ -286,7 +281,7 @@ function newCircles(model: Circles) {
           svg`
           <circle cx=${c.x} cy=${c.y} r=${c.r} 
             style="fill:${
-              c === model.updating ? "grey" : "transparent"
+              c === model.updating ? 'grey' : 'transparent'
             };stroke-width: 1;stroke: black;transition: fill 0.2s ease 0s;"
              @click=${(e: MouseEvent) => {
                model.setCircleForUpdate(index);
@@ -296,27 +291,27 @@ function newCircles(model: Circles) {
           </circle>`
       )}
     </svg>
-    ${model.updating === undefined ? "" : radiusControl(model.updating)}
+    ${model.updating === undefined ? '' : radiusControl(model.updating)}
   `;
 }
 
 function newCells(sheet: Spreadsheet) {
-  let selected: { i: number; j: number } | undefined = undefined;
-  const editableCell = document.createElement("td");
-  editableCell.contentEditable = "true";
-  editableCell.addEventListener("keydown", keydown);
-  const hookByKey: { [key: string]: (i: number, j: number) => void } = {
-    Enter: (i, j) => (selected = undefined),
-    ArrowRight: (i, j) => j < 26 && (selected!.j += 1),
-    ArrowLeft: (i, j) => j > 0 && (selected!.j -= 1),
-    ArrowUp: (i, j) => i > 0 && (selected!.i -= 1),
-    ArrowDown: (i, j) => i < 99 && (selected!.i += 1),
+  let selected: {i: number; j: number} | undefined = undefined;
+  const editableCell = document.createElement('td');
+  editableCell.contentEditable = 'true';
+  editableCell.addEventListener('keydown', keydown);
+  const hookByKey: {[key: string]: (i: number, j: number) => void} = {
+    Enter: () => (selected = undefined),
+    ArrowRight: (_, j) => j < 26 && (selected!.j += 1),
+    ArrowLeft: (_, j) => j > 0 && (selected!.j -= 1),
+    ArrowUp: i => i > 0 && (selected!.i -= 1),
+    ArrowDown: i => i < 99 && (selected!.i += 1),
   };
   function keydown(this: HTMLTableDataCellElement, ev: KeyboardEvent) {
     if (selected) {
       const hook = hookByKey[ev.key];
       if (hook) {
-        const { i, j } = selected!;
+        const {i, j} = selected!;
         sheet.setCell(i, j, this.innerText);
         hook(i, j);
         renderBody();
@@ -342,22 +337,22 @@ function newCells(sheet: Spreadsheet) {
         <tr>
           <th style="min-width:1ch"></th>
           ${Array.from(
-            { length: 26 },
+            {length: 26},
             (_, i) => html` <th>${String.fromCharCode(65 + i)}</th> `
           )}
         </tr>
         ${Array.from(
-          { length: 100 },
+          {length: 100},
           (_, i) => html`
             <tr>
               <th>${i}</th>
-              ${Array.from({ length: 26 }, (_, j) => {
+              ${Array.from({length: 26}, (_, j) => {
                 return selected && selected.i === i && selected.j === j
                   ? editableCell
                   : html`
                       <td
-                        @click=${(e: MouseEvent) => {
-                          selected = { i, j };
+                        @click=${() => {
+                          selected = {i, j};
                           editableCell.innerText = sheet.cell(i, j);
                           renderBody();
                           editableCell.focus();
@@ -381,16 +376,16 @@ function newCells(sheet: Spreadsheet) {
 }
 
 const examples = {
-  counter: { name: "Counter", render: newCounter(PAGE_MODEL.counter) },
+  counter: {name: 'Counter', render: newCounter(PAGE_MODEL.counter)},
   converter: {
-    name: "Temperature Converter",
+    name: 'Temperature Converter',
     render: newConverter(PAGE_MODEL.converter),
   },
-  booker: { name: "Flight Booker", render: newBooker(PAGE_MODEL.booker) },
-  timer: { name: "Timer", render: newTimer(PAGE_MODEL.timer) },
-  crud: { name: "CRUD", render: newCrud(PAGE_MODEL.crud) },
-  drawer: { name: "Circle Drawer", render: newCircles(PAGE_MODEL.circles) },
-  cells: { name: "Cells", render: newCells(PAGE_MODEL.cells) },
+  booker: {name: 'Flight Booker', render: newBooker(PAGE_MODEL.booker)},
+  timer: {name: 'Timer', render: newTimer(PAGE_MODEL.timer)},
+  crud: {name: 'CRUD', render: newCrud(PAGE_MODEL.crud)},
+  drawer: {name: 'Circle Drawer', render: newCircles(PAGE_MODEL.circles)},
+  cells: {name: 'Cells', render: newCells(PAGE_MODEL.cells)},
 };
 
 const renderBody = () =>
@@ -399,8 +394,8 @@ const renderBody = () =>
         <ul class="uk-tab">
           <li class="uk-disabled">Examples</li>
           ${Object.entries(examples).map(
-            ([k, { name }]) => html`
-              <li class=${"#" + k === window.location.hash ? "uk-active" : ""}>
+            ([k, {name}]) => html`
+              <li class=${'#' + k === window.location.hash ? 'uk-active' : ''}>
                 <a href="#${k}">${name}</a>
               </li>
             `
@@ -412,8 +407,8 @@ const renderBody = () =>
         style="margin-left:auto; margin-right:auto; max-width:48em; color:#777"
       >
         ${Object.entries(examples).map(
-          ([k, { render }]) => html`
-            <div ?hidden=${"#" + k !== window.location.hash}>${render()}</div>
+          ([k, {render}]) => html`
+            <div ?hidden=${'#' + k !== window.location.hash}>${render()}</div>
           `
         )}
       </div>
@@ -422,10 +417,10 @@ const renderBody = () =>
   );
 
 if (!window.location.hash) {
-  window.location.hash = "counter";
+  window.location.hash = 'counter';
 }
 renderBody();
-window.addEventListener("change", renderBody);
-window.addEventListener("click", renderBody);
-window.addEventListener("hashchange", renderBody);
-window.addEventListener("input", renderBody);
+window.addEventListener('change', renderBody);
+window.addEventListener('click', renderBody);
+window.addEventListener('hashchange', renderBody);
+window.addEventListener('input', renderBody);

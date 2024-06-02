@@ -1,4 +1,4 @@
-import { newSpreadsheet } from './spreadsheet';
+import {newSpreadsheet} from './spreadsheet';
 
 describe('App', () => {
   const ss = newSpreadsheet();

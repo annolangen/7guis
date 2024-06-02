@@ -1,5 +1,5 @@
-import { html, render, svg } from "../node_modules/lit-html/lit-html";
-import { newSpreadsheet } from "./spreadsheet";
+import {html, render, svg} from 'lit-html';
+import {newSpreadsheet} from './spreadsheet';
 
 function newCounter() {
   let count = 0;
@@ -36,7 +36,7 @@ function newConverter() {
 }
 
 function newBooker() {
-  let flightType = "one-way flight";
+  let flightType = 'one-way flight';
   let out = new Date().toISOString().substr(0, 10); // match yyyy-MM-dd format used by date input
   let back = out;
   let booked = false;
@@ -68,11 +68,11 @@ function newBooker() {
           type="date"
           .value=${back}
           @change=${returnChange}
-          ?disabled=${flightType === "one-way flight"}
+          ?disabled=${flightType === 'one-way flight'}
         />
         <div
           class="pure-button pure-button-primary pure-input-1"
-          ?disabled=${flightType !== "one-way flight" && back <= out}
+          ?disabled=${flightType !== 'one-way flight' && back <= out}
           @click=${bookClick}
         >
           Book
@@ -81,7 +81,7 @@ function newBooker() {
     </form>
     <div ?hidden=${!booked}>
       You have booked a ${flightType} on
-      ${out}${flightType !== "one-way flight" ? " returning on " + back : ""}.
+      ${out}${flightType !== 'one-way flight' ? ' returning on ' + back : ''}.
     </div>
   `;
 }
@@ -89,7 +89,7 @@ function newBooker() {
 function newTimer() {
   let elapsed = 0;
   let duration = 25;
-  let timer: number | null;
+  let timer: number | NodeJS.Timeout | null;
   const tick = () => {
     elapsed = Math.round(10 * elapsed + 1) / 10;
     renderBody();
@@ -151,19 +151,19 @@ function newTimer() {
 }
 
 function newCrud() {
-  let prefix = "";
+  let prefix = '';
   let selected: number | undefined = undefined;
-  const nameList = ["Emil, Hans", "Mustermann, Max", "Tisch, Roman"];
-  const first = document.createElement("input");
-  const last = document.createElement("input");
-  first.type = "text";
-  last.type = "text";
+  const nameList = ['Emil, Hans', 'Mustermann, Max', 'Tisch, Roman'];
+  const first = document.createElement('input');
+  const last = document.createElement('input');
+  first.type = 'text';
+  last.type = 'text';
   function prefixChange(this: HTMLInputElement) {
     prefix = this.value;
   }
   function selectionChange(this: HTMLInputElement) {
     selected = Number(this.value);
-    const match = nameList[selected].match("([^,]*), (.*)");
+    const match = nameList[selected].match('([^,]*), (.*)');
     if (match) {
       last.value = match[1];
       first.value = match[2];
@@ -171,15 +171,15 @@ function newCrud() {
   }
   function resetSelection() {
     selected = undefined;
-    last.value = "";
-    first.value = "";
+    last.value = '';
+    first.value = '';
   }
   function create() {
-    nameList.push(last.value + ", " + first.value);
+    nameList.push(last.value + ', ' + first.value);
     resetSelection();
   }
   const update = () =>
-    (nameList[selected || 0] = last.value + ", " + first.value);
+    (nameList[selected || 0] = last.value + ', ' + first.value);
   function Delete() {
     delete nameList[selected || 0];
     resetSelection();
@@ -241,7 +241,7 @@ function newCircles() {
     undo.push(state);
     selected = undefined;
     const svg = this.getBoundingClientRect();
-    state = [...state, { x: e.x - svg.left, y: e.y - svg.top, r: 20 }];
+    state = [...state, {x: e.x - svg.left, y: e.y - svg.top, r: 20}];
   }
   function adjustRadius(this: HTMLInputElement) {
     state[selected!].r = Number(this.value);
@@ -253,7 +253,7 @@ function newCircles() {
       undo.push(state);
       // New state with fresh copy of selected circle
       state = [...state];
-      state[selected] = { ...state[selected] };
+      state[selected] = {...state[selected]};
       e.stopPropagation(); // prevent creating a new circle in addition
       renderBody();
     }
@@ -266,7 +266,7 @@ function newCircles() {
     undo.push(state);
     state = redo.pop() as State;
   }
-  const radiusControl = ({ x, y, r }: Circle) => html`
+  const radiusControl = ({x, y, r}: Circle) => html`
     <p class="pure-form">
       <label>Adjust radius of circle at (${x}, ${y}):</label>
       <input type="range" @input=${adjustRadius} .value=${r} />
@@ -289,38 +289,38 @@ function newCircles() {
     </div>
     <svg @click=${newCircle} style="border: 2px solid; width:100%; height:60ex">
       ${state.map(
-        ({ x, y, r }, index) =>
+        ({x, y, r}, index) =>
           svg`
           <circle cx=${x} cy=${y} r=${r} 
             style="fill:${
-              index === selected ? "grey" : "transparent"
+              index === selected ? 'grey' : 'transparent'
             };stroke-width: 1;stroke: black;transition: fill 0.2s ease 0s;"
              @click=${selectHandler(index)}>
           </circle>`
       )}
     </svg>
-    ${selected === undefined ? "" : radiusControl(state[selected])}
+    ${selected === undefined ? '' : radiusControl(state[selected])}
   `;
 }
 
 function newCells() {
-  let selected: { i: number; j: number } | undefined = undefined;
+  let selected: {i: number; j: number} | undefined = undefined;
   const sheet = newSpreadsheet();
-  const editableCell = document.createElement("td");
-  editableCell.contentEditable = "true";
-  editableCell.addEventListener("keydown", keydown);
-  const hookByKey: { [key: string]: (i: number, j: number) => void } = {
-    Enter: (i, j) => (selected = undefined),
-    ArrowRight: (i, j) => j < 26 && (selected!.j += 1),
-    ArrowLeft: (i, j) => j > 0 && (selected!.j -= 1),
-    ArrowUp: (i, j) => i > 0 && (selected!.i -= 1),
-    ArrowDown: (i, j) => i < 99 && (selected!.i += 1),
+  const editableCell = document.createElement('td');
+  editableCell.contentEditable = 'true';
+  editableCell.addEventListener('keydown', keydown);
+  const hookByKey: {[key: string]: (i: number, j: number) => void} = {
+    Enter: () => (selected = undefined),
+    ArrowRight: (_, j) => j < 26 && (selected!.j += 1),
+    ArrowLeft: (_, j) => j > 0 && (selected!.j -= 1),
+    ArrowUp: i => i > 0 && (selected!.i -= 1),
+    ArrowDown: i => i < 99 && (selected!.i += 1),
   };
   function keydown(this: HTMLTableDataCellElement, ev: KeyboardEvent) {
     if (selected) {
       const hook = hookByKey[ev.key];
       if (hook) {
-        const { i, j } = selected!;
+        const {i, j} = selected!;
         sheet.setCell(i, j, this.innerText);
         hook(i, j);
         renderBody();
@@ -349,22 +349,22 @@ function newCells() {
         <tr>
           <th style="min-width:1ch"></th>
           ${Array.from(
-            { length: 26 },
+            {length: 26},
             (_, i) => html` <th>${String.fromCharCode(65 + i)}</th> `
           )}
         </tr>
         ${Array.from(
-          { length: 100 },
+          {length: 100},
           (_, i) => html`
             <tr>
               <td><b>${i}</b></td>
-              ${Array.from({ length: 26 }, (_, j) => {
+              ${Array.from({length: 26}, (_, j) => {
                 return selected && selected.i === i && selected.j === j
                   ? editableCell
                   : html`
                       <td
-                        @click=${(e: MouseEvent) => {
-                          selected = { i, j };
+                        @click=${() => {
+                          selected = {i, j};
                           editableCell.innerText = sheet.cell(i, j);
                           renderBody();
                           editableCell.focus();
@@ -388,13 +388,13 @@ function newCells() {
 }
 
 const examples = {
-  counter: { name: "Counter", render: newCounter() },
-  converter: { name: "Temperature Converter", render: newConverter() },
-  booker: { name: "Flight Booker", render: newBooker() },
-  timer: { name: "Timer", render: newTimer() },
-  crud: { name: "CRUD", render: newCrud() },
-  drawer: { name: "Circle Drawer", render: newCircles() },
-  cells: { name: "Cells", render: newCells() },
+  counter: {name: 'Counter', render: newCounter()},
+  converter: {name: 'Temperature Converter', render: newConverter()},
+  booker: {name: 'Flight Booker', render: newBooker()},
+  timer: {name: 'Timer', render: newTimer()},
+  crud: {name: 'CRUD', render: newCrud()},
+  drawer: {name: 'Circle Drawer', render: newCircles()},
+  cells: {name: 'Cells', render: newCells()},
 };
 
 const renderBody = () =>
@@ -407,7 +407,7 @@ const renderBody = () =>
         <div class="pure-menu-heading">Examples</div>
         <ul class="pure-menu-list">
           ${Object.entries(examples).map(
-            ([k, { name }]) => html`
+            ([k, {name}]) => html`
               <li class="pure-menu-item">
                 <a href="#${k}" class="pure-menu-link">${name}</a>
               </li>
@@ -420,8 +420,8 @@ const renderBody = () =>
         style="margin-left:auto; margin-right:auto; max-width:48em; color:#777"
       >
         ${Object.entries(examples).map(
-          ([k, { render }]) => html`
-            <div ?hidden=${"#" + k !== window.location.hash}>${render()}</div>
+          ([k, {render}]) => html`
+            <div ?hidden=${'#' + k !== window.location.hash}>${render()}</div>
           `
         )}
       </div>
@@ -430,10 +430,10 @@ const renderBody = () =>
   );
 
 if (!window.location.hash) {
-  window.location.hash = "counter";
+  window.location.hash = 'counter';
 }
 renderBody();
-window.addEventListener("change", renderBody);
-window.addEventListener("click", renderBody);
-window.addEventListener("hashchange", renderBody);
-window.addEventListener("input", renderBody);
+window.addEventListener('change', renderBody);
+window.addEventListener('click', renderBody);
+window.addEventListener('hashchange', renderBody);
+window.addEventListener('input', renderBody);

@@ -1,11 +1,10 @@
 {
   "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
-    "lib": ["dom","es2018","dom.iterable","scripthost"],
+    "lib": ["dom", "es2018", "dom.iterable", "scripthost"],
     "rootDir": ".",
-    "outDir": "build"
+    "outDir": "build",
+    "moduleResolution": "node"
   },
-  "include": [
-    "ts/**/*.ts",
-  ]
+  "include": ["ts/**/*.ts"]
 }

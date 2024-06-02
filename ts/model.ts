@@ -1,4 +1,4 @@
-import { newSpreadsheet } from "./spreadsheet";
+import {newSpreadsheet} from './spreadsheet';
 
 export interface Counter {
   readonly count: number;
@@ -69,7 +69,7 @@ export interface Timer {
 function newTimer() {
   let elapsed = 0;
   let duration = 25;
-  let timer: number | null = setInterval(tick, 100);
+  let timer: number | NodeJS.Timeout | null = setInterval(tick, 100);
   function tick() {
     elapsed = Math.round(10 * elapsed + 1) / 10;
     normalize();
@@ -109,25 +109,25 @@ export interface Crud {
   prefix: string;
   mapPrefixFiltered<T>(mapFn: (name: string, id: number) => T): T[];
   readonly selected: number | undefined;
-  setSelected(i: number | undefined): { first: string; last: string };
+  setSelected(i: number | undefined): {first: string; last: string};
   create(first: string, last: string): void;
   updateSelected(first: string, last: string): void;
   deleteSelected(): void;
 }
 
 function newCrud() {
-  let prefix = "";
+  let prefix = '';
   let selected: number | undefined = undefined;
-  const nameList = ["Emil, Hans", "Mustermann, Max", "Tisch, Roman"];
+  const nameList = ['Emil, Hans', 'Mustermann, Max', 'Tisch, Roman'];
   function setSelected(i: number | undefined) {
     selected = i;
     if (i !== undefined) {
-      const match = nameList[i].match("([^,]*), (.*)");
+      const match = nameList[i].match('([^,]*), (.*)');
       if (match) {
-        return { first: match[2], last: match[1] };
+        return {first: match[2], last: match[1]};
       }
     }
-    return { first: "", last: "" };
+    return {first: '', last: ''};
   }
   return {
     get prefix() {
@@ -150,10 +150,10 @@ function newCrud() {
     setSelected,
     create(first: string, last: string) {
       selected = nameList.length;
-      nameList.push(last + ", " + first);
+      nameList.push(last + ', ' + first);
     },
     updateSelected: (first: string, last: string) =>
-      (nameList[selected || 0] = last + ", " + first),
+      (nameList[selected || 0] = last + ', ' + first),
     deleteSelected() {
       delete nameList[selected || 0];
       setSelected(undefined);
@@ -184,7 +184,7 @@ interface State {
 }
 
 function newCircles() {
-  let state: State = { circles: [] };
+  let state: State = {circles: []};
   const undo: State[] = [];
   const redo: State[] = [];
   return {
@@ -196,19 +196,19 @@ function newCircles() {
     },
     addCircle(circle: Circle) {
       undo.push(state);
-      state = { circles: [...state.circles, circle] };
+      state = {circles: [...state.circles, circle]};
     },
     setCircleForUpdate(i: number) {
       undo.push(state);
-      const updating = { ...state.circles[i] };
-      state = { circles: [...state.circles], updating };
+      const updating = {...state.circles[i]};
+      state = {circles: [...state.circles], updating};
       state.circles[i] = updating;
     },
     get canUndo() {
       return undo.length > 0;
     },
     undo() {
-      if (!undo.length) throw new Error("empty undo");
+      if (!undo.length) throw new Error('empty undo');
       redo.push(state);
       state = undo.pop() as State;
     },
@@ -216,7 +216,7 @@ function newCircles() {
       return redo.length > 0;
     },
     redo() {
-      if (!redo.length) throw new Error("empty redo");
+      if (!redo.length) throw new Error('empty redo');
       undo.push(state);
       state = redo.pop() as State;
     },
