@@ -1,6 +1,5 @@
-import { html, render, svg } from '../node_modules/lit-html/lit-html';
-import { newSpreadsheet, Spreadsheet } from './spreadsheet';
-import { styleMap } from '../node_modules/lit-html/directives/style-map.js';
+import { html, render, svg } from "../node_modules/lit-html/lit-html";
+import { Spreadsheet } from "./spreadsheet";
 import {
   PAGE_MODEL,
   Counter,
@@ -10,7 +9,7 @@ import {
   Crud,
   Circles,
   Circle,
-} from './model';
+} from "./model";
 
 const newCounter = (counter: Counter) => () => html`
   <form class="pure-form">
@@ -43,10 +42,10 @@ function newConverter(converter: Converter) {
 }
 
 function newBooker(booker: Booker) {
-  let type = 'one-way flight';
+  let type = "one-way flight";
   function typeChange(this: HTMLInputElement) {
     type = this.value;
-    booker.back = type === 'return flight' ? '' : undefined;
+    booker.back = type === "return flight" ? "" : undefined;
   }
   function outboundChange(this: HTMLInputElement) {
     booker.outbound = this.value;
@@ -78,7 +77,7 @@ function newBooker(booker: Booker) {
         <div
           class="pure-button pure-button-primary pure-input-1"
           ?disabled=${booker.back !== undefined &&
-            booker.back <= booker.outbound}
+          booker.back <= booker.outbound}
           @click=${bookClick}
         >
           Book
@@ -88,8 +87,8 @@ function newBooker(booker: Booker) {
     <div ?hidden=${!booker.booked}>
       You have booked a ${type} on
       ${booker.outbound}${booker.back !== undefined
-        ? ' returning on ' + booker.back
-        : ''}.
+        ? " returning on " + booker.back
+        : ""}.
     </div>
   `;
 }
@@ -157,10 +156,10 @@ function newTimer(model: Timer) {
 }
 
 function newCrud(model: Crud) {
-  const firstInput = document.createElement('input');
-  const lastInput = document.createElement('input');
-  firstInput.type = 'text';
-  lastInput.type = 'text';
+  const firstInput = document.createElement("input");
+  const lastInput = document.createElement("input");
+  firstInput.type = "text";
+  lastInput.type = "text";
   function prefixChange(this: HTMLInputElement) {
     model.prefix = this.value;
   }
@@ -174,8 +173,8 @@ function newCrud(model: Crud) {
   }
   function deleteSelected() {
     model.deleteSelected();
-    lastInput.value = '';
-    firstInput.value = '';
+    lastInput.value = "";
+    firstInput.value = "";
   }
   const create = () => model.create(firstInput.value, lastInput.value);
   const update = () => model.updateSelected(firstInput.value, lastInput.value);
@@ -188,10 +187,7 @@ function newCrud(model: Crud) {
       <div>
         <select size="2" style="height:100px" @change=${selectionChange}>
           ${model.mapPrefixFiltered(
-            (name, i) =>
-              html`
-                <option value=${i}>${name}</option>
-              `
+            (name, i) => html` <option value=${i}>${name}</option> `
           )}
         </select>
         <fieldset style="display:inline-block;vertical-align:middle;">
@@ -259,7 +255,7 @@ function newCircles(model: Circles) {
           svg`
           <circle cx=${c.x} cy=${c.y} r=${c.r} 
             style="fill:${
-              c === model.updating ? 'grey' : 'transparent'
+              c === model.updating ? "grey" : "transparent"
             };stroke-width: 1;stroke: black;transition: fill 0.2s ease 0s;"
              @click=${(e: MouseEvent) => {
                model.setCircleForUpdate(index);
@@ -275,9 +271,9 @@ function newCircles(model: Circles) {
 
 function newCells(sheet: Spreadsheet) {
   let selected: { i: number; j: number } | undefined = undefined;
-  const editableCell = document.createElement('td');
-  editableCell.contentEditable = 'true';
-  editableCell.addEventListener('keydown', keydown);
+  const editableCell = document.createElement("td");
+  editableCell.contentEditable = "true";
+  editableCell.addEventListener("keydown", keydown);
   const hookByKey: { [key: string]: (i: number, j: number) => void } = {
     Enter: (i, j) => (selected = undefined),
     ArrowRight: (i, j) => j < 26 && (selected!.j += 1),
@@ -319,10 +315,7 @@ function newCells(sheet: Spreadsheet) {
           <th style="min-width:1ch"></th>
           ${Array.from(
             { length: 26 },
-            (_, i) =>
-              html`
-                <th>${String.fromCharCode(65 + i)}</th>
-              `
+            (_, i) => html` <th>${String.fromCharCode(65 + i)}</th> `
           )}
         </tr>
         ${Array.from(
@@ -360,16 +353,16 @@ function newCells(sheet: Spreadsheet) {
 }
 
 const examples = {
-  counter: { name: 'Counter', render: newCounter(PAGE_MODEL.counter) },
+  counter: { name: "Counter", render: newCounter(PAGE_MODEL.counter) },
   converter: {
-    name: 'Temperature Converter',
+    name: "Temperature Converter",
     render: newConverter(PAGE_MODEL.converter),
   },
-  booker: { name: 'Flight Booker', render: newBooker(PAGE_MODEL.booker) },
-  timer: { name: 'Timer', render: newTimer(PAGE_MODEL.timer) },
-  crud: { name: 'CRUD', render: newCrud(PAGE_MODEL.crud) },
-  drawer: { name: 'Circle Drawer', render: newCircles(PAGE_MODEL.circles) },
-  cells: { name: 'Cells', render: newCells(PAGE_MODEL.cells) },
+  booker: { name: "Flight Booker", render: newBooker(PAGE_MODEL.booker) },
+  timer: { name: "Timer", render: newTimer(PAGE_MODEL.timer) },
+  crud: { name: "CRUD", render: newCrud(PAGE_MODEL.crud) },
+  drawer: { name: "Circle Drawer", render: newCircles(PAGE_MODEL.circles) },
+  cells: { name: "Cells", render: newCells(PAGE_MODEL.cells) },
 };
 
 const renderBody = () =>
@@ -382,12 +375,11 @@ const renderBody = () =>
         <div class="pure-menu-heading">Examples</div>
         <ul class="pure-menu-list">
           ${Object.entries(examples).map(
-            ([k, { name }]) =>
-              html`
-                <li class="pure-menu-item">
-                  <a href="#${k}" class="pure-menu-link">${name}</a>
-                </li>
-              `
+            ([k, { name }]) => html`
+              <li class="pure-menu-item">
+                <a href="#${k}" class="pure-menu-link">${name}</a>
+              </li>
+            `
           )}
         </ul>
       </div>
@@ -396,12 +388,9 @@ const renderBody = () =>
         style="margin-left:auto; margin-right:auto; max-width:48em; color:#777"
       >
         ${Object.entries(examples).map(
-          ([k, { render }]) =>
-            html`
-              <div ?hidden=${'#' + k !== window.location.hash}>
-                ${render()}
-              </div>
-            `
+          ([k, { render }]) => html`
+            <div ?hidden=${"#" + k !== window.location.hash}>${render()}</div>
+          `
         )}
       </div>
     `,
@@ -409,10 +398,10 @@ const renderBody = () =>
   );
 
 if (!window.location.hash) {
-  window.location.hash = 'counter';
+  window.location.hash = "counter";
 }
 renderBody();
-window.addEventListener('change', renderBody);
-window.addEventListener('click', renderBody);
-window.addEventListener('hashchange', renderBody);
-window.addEventListener('input', renderBody);
+window.addEventListener("change", renderBody);
+window.addEventListener("click", renderBody);
+window.addEventListener("hashchange", renderBody);
+window.addEventListener("input", renderBody);
