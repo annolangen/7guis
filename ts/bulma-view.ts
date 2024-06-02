@@ -342,7 +342,7 @@ function newCells(sheet: Spreadsheet) {
     ArrowUp: (i, j) => i > 0 && (selected!.i -= 1),
     ArrowDown: (i, j) => i < 99 && (selected!.i += 1),
   };
-  function keydown(this: HTMLTableDataCellElement, ev: KeyboardEvent) {
+  function keydown(this: HTMLTableCellElement, ev: KeyboardEvent) {
     if (selected) {
       const hook = hookByKey[ev.key];
       if (hook) {

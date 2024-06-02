@@ -101,29 +101,25 @@ export function newSpreadsheet(): Spreadsheet {
       row: Number(match[2]),
       col: match[1].toUpperCase().charCodeAt(0) - 65,
     });
+
+    function parseRef() {
+      const match = tryMatch(REF_PATTERN);
+      if (!match) {
+        throw new Error("syntax error: expected reference");
+      }
+      return ref(match);
+    }
+
     // Parses a rectangular region of cells, like `A0:B1`.
-    function rect(): {
-      xmin: number;
-      ymin: number;
-      xmax: number;
-      ymax: number;
-    } {
-      const first = tryMatch(REF_PATTERN);
-      if (!first) {
-        throw new Error("syntax error: expected reference");
-      }
+    function rect() {
+      const first = parseRef();
       match(":");
-      const second = tryMatch(REF_PATTERN);
-      if (!second) {
-        throw new Error("syntax error: expected reference");
-      }
-      const firstRef = ref(first);
-      const secondRef = ref(second);
+      const second = parseRef();
       return {
-        xmin: Math.min(firstRef.col, secondRef.col),
-        ymin: Math.min(firstRef.row, secondRef.row),
-        xmax: Math.max(firstRef.col, secondRef.col),
-        ymax: Math.max(firstRef.row, secondRef.row),
+        xmin: Math.min(first.col, second.col),
+        ymin: Math.min(first.row, second.row),
+        xmax: Math.max(first.col, second.col),
+        ymax: Math.max(first.row, second.row),
       };
     }
     function expr(): Calculator {
@@ -143,16 +139,16 @@ export function newSpreadsheet(): Spreadsheet {
       }
       const rectOpMatch = tryMatch(RECT_OP_PATTERN);
       if (rectOpMatch) {
-        const args = rect();
+        const { xmin, ymin, xmax, ymax } = rect();
         match(")");
-        const acc = RECT_OPS[rectOpMatch[1]];
+        const { op, init } = RECT_OPS[rectOpMatch[1]];
         return depth => {
-          let result = acc.init;
-          for (let i = args.xmin; i <= args.xmax; i++) {
-            for (let j = args.ymin; j <= args.ymax; j++) {
+          let result = init;
+          for (let i = ymin; i <= ymax; i++) {
+            for (let j = xmin; j <= xmax; j++) {
               const v = deref(i, j)(depth);
               if (!isNaN(v)) {
-                result = acc.op(result, v);
+                result = op(result, v);
               }
             }
           }
